@@ -194,8 +194,8 @@ function Hero({ goal, streak, level }: { goal: string; streak: number; level: st
         )}
       </div>
       {/* Reserve height so layout doesn't jump as goal length changes */}
-      <div style={{ minHeight: 128, marginTop: 14, display: 'flex', alignItems: 'flex-start' }}>
-        <h1 style={{
+      <div className="db-hero-min" style={{ minHeight: 128, marginTop: 14, display: 'flex', alignItems: 'flex-start' }}>
+        <h1 className="db-hero-title" style={{
           fontFamily: T.serifD,
           fontSize: tier.size,
           lineHeight: tier.lh,
@@ -601,6 +601,8 @@ export default function FolioDashboard() {
           .db-body            { padding: 32px 24px 64px !important; }
           .db-grid            { grid-template-columns: 1fr !important; }
           .db-today-row       { grid-template-columns: 90px 1fr 22px !important; gap: 12px !important; }
+          .db-hero-title      { font-size: clamp(22px, 7vw, 32px) !important; line-height: 1.15 !important; letter-spacing: -0.5px !important; }
+          .db-hero-min        { min-height: 0 !important; }
         }
       `}</style>
 
@@ -626,7 +628,7 @@ export default function FolioDashboard() {
           {/* ── Right: Editorial body ─────────────────────────────────── */}
           <div className="db-body">
             <Hero
-              goal={plan.metadata.goal || 'No active protocol set.'}
+              goal={plan.metadata.title || plan.metadata.goal || 'No active protocol set.'}
               streak={streak}
               level={plan.metadata.level}
             />

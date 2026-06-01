@@ -38,6 +38,12 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
 * All fields must be present. Do NOT omit any keys.
 * Use consistent kebab-case IDs (e.g. "barre-chords", "squat-form", "chapter-1").
 * Keep values realistic, specific, and actionable.
+* module "order" values start at 1 and increment by 1. Never use 0.
+* For workout splits: each item in a day's array must be a SINGLE EXERCISE with its prescription (e.g. "Pull-ups — 4×8, rest 90s"). NEVER put session titles, durations, or day descriptions as the first array item — those go in "dayFocus" instead.
+* Rest days and active recovery days must have an EMPTY array [] in "split". Use "dayFocus" to label them (e.g. "Active Recovery", "Full Rest").
+* "focus" must be 1–2 sentences max. No bullet points, no multi-paragraph text.
+* If the plan includes a skill module (guitar, coding, language, etc.), do NOT add that skill as an exercise or activity inside the workout split. The skill module and any related habit handle it — duplicating it in the split creates conflicts.
+* Habits track DAILY behaviours. Do not add a habit for something already fully tracked by a module (e.g. no "practice guitar" habit if there is a skill module for guitar — unless the user explicitly wants a daily checkbox separate from session logging).
 
 ---
 ## 🧠 ASK THE USER FOR
@@ -53,6 +59,7 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
 
 {
   "metadata": {
+    "title": "short plan name, 2-4 words, e.g. 'Summer Shred', 'Year of Guitar'",
     "goal": "one-sentence primary goal",
     "level": "beginner | intermediate | advanced",
     "version": 2,
@@ -72,13 +79,22 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
       "title": "Training Protocol",
       "order": 1,
       "data": {
-        "focus": "Overall training focus (e.g. Hypertrophy, Strength, Endurance)",
+        "focus": "One or two sentences describing the overall training approach and goal.",
+        "dayFocus": {
+          "Monday": "PULL — 35 min",
+          "Tuesday": "PUSH — 35 min",
+          "Wednesday": "LEGS + CORE — 40 min",
+          "Thursday": "Active Recovery",
+          "Friday": "UPPER — 50 min",
+          "Saturday": "Full Rest",
+          "Sunday": ""
+        },
         "split": {
-          "Monday": ["Exercise Name", "Exercise Name"],
+          "Monday": ["Exercise Name — sets×reps, rest Xs", "Exercise Name — sets×reps, rest Xs"],
           "Tuesday": [],
-          "Wednesday": ["Exercise Name"],
+          "Wednesday": ["Exercise Name — sets×reps, rest Xs"],
           "Thursday": [],
-          "Friday": ["Exercise Name", "Exercise Name"],
+          "Friday": ["Exercise Name — sets×reps, rest Xs", "Exercise Name — sets×reps, rest Xs"],
           "Saturday": [],
           "Sunday": []
         }
@@ -263,6 +279,7 @@ function ManualBuilder({ user }: { user: { id: string } }) {
   const router = useRouter();
 
   // Metadata
+  const [title, setTitle] = useState('');
   const [goal,  setGoal]  = useState('');
   const [level, setLevel] = useState('beginner');
 
@@ -339,7 +356,7 @@ function ManualBuilder({ user }: { user: { id: string } }) {
       const planTypes = [workout && 'workout', skill && 'skill', study && 'study', nutrition && 'nutrition'].filter(Boolean);
 
       const plan = {
-        metadata: { goal: goal.trim(), level, version: 2, planType: planTypes.join('+') },
+        metadata: { ...(title.trim() && { title: title.trim() }), goal: goal.trim(), level, version: 2, planType: planTypes.join('+') },
         habits: habits.filter(h => h.name.trim()).map(h => ({ id: slug(h.name) || h.id, name: h.name, category: h.category })),
         modules: mods,
       };
@@ -362,11 +379,15 @@ function ManualBuilder({ user }: { user: { id: string } }) {
         <div style={{ padding: '10px 16px', borderBottom: `1px solid ${T.rule}`, background: T.tint }}>
           <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone }}>Plan Basics</div>
         </div>
-        <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 160px', gap: 12 }}>
+        <div style={{ padding: '16px', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <FInput label="Plan Title" value={title} onChange={setTitle}
+              placeholder="e.g. Summer Shred, Year of Guitar" />
+            <FSelect label="Level" value={level} onChange={setLevel}
+              options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Intermediate' }, { value: 'advanced', label: 'Advanced' }]} />
+          </div>
           <FInput label="Goal" value={goal} onChange={setGoal}
             placeholder="e.g. Build muscle and learn Spanish" required />
-          <FSelect label="Level" value={level} onChange={setLevel}
-            options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Intermediate' }, { value: 'advanced', label: 'Advanced' }]} />
         </div>
       </div>
 

@@ -173,6 +173,10 @@ function MetadataSection({ plan, onChange }: { plan: AestheticOSPlan; onChange: 
     <SectionShell label="Plan Metadata">
       <div style={{ display: 'grid', gap: 20 }}>
         <div>
+          <Label>Plan Title</Label>
+          <FolioInput value={plan.metadata.title ?? ''} onChange={v => set('title', v)} placeholder="e.g. Summer Shred, Year of Guitar" />
+        </div>
+        <div>
           <Label>Goal Statement</Label>
           <FolioInput value={plan.metadata.goal} onChange={v => set('goal', v)} placeholder="One-sentence primary goal" />
         </div>
@@ -382,7 +386,7 @@ function PlansPanel() {
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${T.rule}`, background: p.is_active ? T.tint : 'transparent' }}>
             <div style={{ width: 6, height: 6, flexShrink: 0, background: p.is_active ? T.accent : 'transparent', border: p.is_active ? 'none' : `1px solid ${T.rule}` }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 11, color: p.is_active ? T.accent : T.ink, textTransform: 'uppercase', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.plan.metadata.goal}</div>
+              <div style={{ fontFamily: T.mono, fontSize: 11, color: p.is_active ? T.accent : T.ink, textTransform: 'uppercase', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.plan.metadata.title || p.plan.metadata.goal}</div>
               <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, textTransform: 'uppercase', marginTop: 2 }}>{p.plan.metadata.level} · {p.plan.modules.length} module{p.plan.modules.length !== 1 ? 's' : ''}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -413,7 +417,7 @@ function PlansPanel() {
 
 function PublishModal({ plan, userId, userEmail, onClose }: { plan: AestheticOSPlan; userId: string; userEmail: string; onClose: () => void }) {
   const defaultUsername = userEmail.split('@')[0] ?? '';
-  const [title,       setTitle]       = useState(plan.metadata.goal);
+  const [title,       setTitle]       = useState(plan.metadata.title || plan.metadata.goal);
   const [description, setDescription] = useState('');
   const [username,    setUsername]    = useState('');
   const [hasProfile,  setHasProfile]  = useState<boolean | null>(null);
@@ -546,7 +550,7 @@ function PlanPageContent() {
         <div style={{ padding: '32px 0 24px', borderBottom: `1px solid ${T.rule}`, marginBottom: 28 }}>
           <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>Plan Editor</div>
           <h1 style={{ fontFamily: T.serifD, fontSize: 32, color: T.ink, margin: 0, lineHeight: 1.1 }}>
-            {draft.metadata.goal || 'Your Plan'}
+            {draft.metadata.title || draft.metadata.goal || 'Your Plan'}
           </h1>
           <p style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, marginTop: 8 }}>
             Edit any section below. Changes are local until you save.

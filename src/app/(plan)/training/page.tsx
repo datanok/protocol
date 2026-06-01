@@ -27,7 +27,7 @@ function Hr({ ink }: { ink?: boolean }) {
 const DAY_FULL  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 
-function SplitGrid({ split, todayName }: { split: Record<string, string[]>; todayName: string }) {
+function SplitGrid({ split, dayFocus, todayName }: { split: Record<string, string[]>; dayFocus?: Record<string, string>; todayName: string }) {
   const todayIdx  = DAY_FULL.indexOf(todayName);
   const [active, setActive] = useState<number>(todayIdx >= 0 ? todayIdx : 0);
 
@@ -89,9 +89,16 @@ function SplitGrid({ split, todayName }: { split: Record<string, string[]>; toda
       {/* Exercise list for active day */}
       <div style={{ padding: '20px 24px', minHeight: 120 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone }}>
-            {DAY_FULL[active]}{DAY_FULL[active] === todayName ? ' · Today' : ''}
-          </span>
+          <div>
+            <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone }}>
+              {DAY_FULL[active]}{DAY_FULL[active] === todayName ? ' · Today' : ''}
+            </span>
+            {dayFocus?.[DAY_FULL[active]] && (
+              <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, letterSpacing: '0.08em', marginTop: 3 }}>
+                {dayFocus[DAY_FULL[active]]}
+              </div>
+            )}
+          </div>
           {!isRest && (
             <span style={{ fontFamily: T.mono, fontSize: 9, color: T.stone }}>
               {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
@@ -359,15 +366,26 @@ function TrainingPageContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.surface, color: T.ink }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .tr-main      { padding: 56px 16px 64px !important; }
+          .tr-header-h1 { font-size: 24px !important; line-height: 1.1 !important; }
+          .tr-stats     { grid-template-columns: repeat(2, 1fr) !important; }
+          .tr-stats > div:nth-child(2) { border-right: none !important; }
+          .tr-stats > div:nth-child(1),
+          .tr-stats > div:nth-child(2) { border-bottom: 1px solid ${T.rule}; }
+          .tr-cols      { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}><AppTopNav /></div>
 
-      <main style={{ paddingTop: 56, maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
+      <main className="tr-main" style={{ paddingTop: 56, maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div style={{ paddingTop: 36, paddingBottom: 24, marginBottom: 32, borderBottom: `1px solid ${T.ink}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <Label>Training</Label>
-            <h1 style={{ fontFamily: T.serifD, fontSize: 40, color: T.ink, margin: '8px 0 0', lineHeight: 1.05 }}>
+            <h1 className="tr-header-h1" style={{ fontFamily: T.serifD, fontSize: 40, color: T.ink, margin: '8px 0 0', lineHeight: 1.05 }}>
               {workoutData?.focus ?? 'Workout Protocol'}
             </h1>
             <div style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, marginTop: 8 }}>
@@ -388,7 +406,7 @@ function TrainingPageContent() {
         </div>
 
         {/* ── Stats strip ────────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, border: `1px solid ${T.rule}`, marginBottom: 32 }}>
+        <div className="tr-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, border: `1px solid ${T.rule}`, marginBottom: 32 }}>
           {[
             { label: 'Today',        value: isRestDay ? 'Rest' : `${todayExercises.length} ex.`, color: isRestDay ? T.stone : T.ink },
             { label: 'Sets (60d)',   value: String(totalSets),  color: T.ink },
@@ -416,12 +434,12 @@ function TrainingPageContent() {
                 {Object.values(workoutData.split).filter(e => e.length > 0).length}/7 training days
               </span>
             </div>
-            <SplitGrid split={workoutData.split} todayName={today.dayName} />
+            <SplitGrid split={workoutData.split} dayFocus={workoutData.dayFocus} todayName={today.dayName} />
           </div>
         )}
 
         {/* ── Two-column: exercise history + volume ───────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 32, alignItems: 'start' }}>
+        <div className="tr-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 32, alignItems: 'start' }}>
 
           {/* Exercise history */}
           <div>

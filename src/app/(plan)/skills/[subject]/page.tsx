@@ -240,7 +240,7 @@ function SkillPageContent() {
 
   const urlSubject = useMemo(() => {
     const s = typeof params.subject === 'string' ? params.subject : '';
-    return normalizeSubject(s);
+    return normalizeSubject(decodeURIComponent(s));
   }, [params.subject]);
 
   // Auto-redirect bare /skills route or wrong-subject URL

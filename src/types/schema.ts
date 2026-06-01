@@ -31,6 +31,7 @@ export type SkillBenchmark = ModuleNode;
 // ─── Plan metadata ──────────────────────────────────────────────────────────
 
 export type PlanMetadata = {
+  title?: string;     // Short display name, e.g. "Summer Shred" — falls back to goal if absent
   goal: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   version: number;
@@ -48,8 +49,9 @@ export type Habit = {
 // ─── Module data shapes ──────────────────────────────────────────────────────
 
 export type WorkoutModuleData = {
-  split: Record<string, string[]>; // { Monday: ['Bench Press', ...], Tuesday: [], ... }
   focus: string;
+  dayFocus?: Record<string, string>; // Per-day session label, e.g. { Monday: "PULL — 35 min" }
+  split: Record<string, string[]>;
 };
 
 export type SkillModuleData = {
