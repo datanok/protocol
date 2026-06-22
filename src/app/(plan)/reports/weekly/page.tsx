@@ -6,6 +6,10 @@ import AppTopNav from '@/components/navigation/AppTopNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import type { WorkoutModuleData } from '@/types/schema';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { toYmd } from '@/lib/utils';
+import TrainingWeekGrid from '@/components/reports/TrainingWeekGrid';
 
 import { T } from '@/lib/tokens';
 
@@ -21,70 +25,6 @@ function Hr({ ink }: { ink?: boolean }) {
   return <div style={{ height: 1, background: ink ? T.ink : T.rule, width: '100%' }} />;
 }
 
-const DAY_FULL: Record<string, string> = {
-  MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday',
-  THU: 'Thursday', FRI: 'Friday', SAT: 'Saturday', SUN: 'Sunday',
-};
-
-// Single-pass 7-column grid: each column owns its header + exercises.
-// Avoids the two-pass row synchronisation problem.
-function TrainingGrid({ workoutData, dayLabels, dateLabels }: {
-  workoutData: WorkoutModuleData;
-  dayLabels:   string[];   // ['MON', 'TUE', ...]
-  dateLabels:  string[];   // ['5 JAN', '6 JAN', ...]
-}) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', border: `1px solid ${T.rule}` }}>
-      {dayLabels.map((label, i) => {
-        const isToday   = i === dayLabels.length - 1;
-        const exercises = workoutData.split?.[DAY_FULL[label] ?? label] ?? [];
-        const isRest    = exercises.length === 0;
-
-        return (
-          <div
-            key={i}
-            style={{
-              borderRight: i < 6 ? `1px solid ${T.rule}` : 'none',
-              background: isToday ? T.tint : 'transparent',
-              padding: '12px 10px',
-              minHeight: 88,
-            }}
-          >
-            {/* Day label */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: isToday ? T.accent : T.stone }}>
-                {label}
-              </div>
-              <div style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, marginTop: 1 }}>
-                {dateLabels[i]}
-              </div>
-            </div>
-
-            {/* Exercises */}
-            {isRest ? (
-              <div style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Rest
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {exercises.slice(0, 4).map((ex: string, ei: number) => (
-                  <div key={ei} style={{ fontFamily: T.mono, fontSize: 9, color: isToday ? T.ink : T.stone, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.4 }}>
-                    {ex}
-                  </div>
-                ))}
-                {exercises.length > 4 && (
-                  <div style={{ fontFamily: T.mono, fontSize: 9, color: T.stone }}>
-                    +{exercises.length - 4}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function WeeklyReportContent() {
   const { user } = useAuth();
@@ -96,12 +36,33 @@ function WeeklyReportContent() {
   // Build 7-day window: 6 days ago → today
   const dayLabels:  string[] = [];
   const dateLabels: string[] = [];
+  const ymdLabels:  string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     dayLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase());
     dateLabels.push(d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }).toUpperCase());
+    ymdLabels.push(toYmd(d));
   }
+
+  const startYmd = ymdLabels[0]!;
+  const endYmd   = ymdLabels[6]!;
+
+  const { data: commitRows } = useQuery({
+    queryKey: ['week-commits', user?.id, startYmd, endYmd],
+    queryFn:  async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('daily_commits')
+        .select('committed_date')
+        .eq('user_id', user.id)
+        .gte('committed_date', startYmd)
+        .lte('committed_date', endYmd);
+      if (error) throw error;
+      return (data ?? []).map((r: { committed_date: string }) => r.committed_date);
+    },
+    enabled: !!user?.id,
+  });
 
   const consistency7  = stats?.commits.consistency7Pct  ?? 0;
   const consistency30 = stats?.commits.consistency30Pct ?? 0;
@@ -184,7 +145,7 @@ function WeeklyReportContent() {
         </div>
 
         {/* ── Directive — actionable content before the grids ──────── */}
-        <div style={{ border: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.accent}`, padding: '16px 20px', marginBottom: 32 }}>
+        <div style={{ border: `1px solid ${T.rule}`, padding: '16px 20px', marginBottom: 32 }}>
           <LabelXS>This Week</LabelXS>
           <div style={{ fontFamily: T.serifT, fontSize: 15, color: T.ink, marginTop: 10, lineHeight: 1.6 }}>
             {directive}{streakLine}
@@ -201,7 +162,14 @@ function WeeklyReportContent() {
           <div style={{ marginBottom: 32 }}>
             <LabelXS>Training — Planned Schedule</LabelXS>
             <div style={{ height: 1, background: T.rule, margin: '8px 0 12px' }} />
-            <TrainingGrid workoutData={workoutData} dayLabels={dayLabels} dateLabels={dateLabels} />
+            <TrainingWeekGrid
+              workoutData={workoutData}
+              dayLabels={dayLabels}
+              dateLabels={dateLabels}
+              ymdLabels={ymdLabels}
+              committedDates={commitRows}
+              maxExercises={4}
+            />
           </div>
         )}
 
