@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createPlan } from '@/actions/planActions';
-import { Loader2, Copy, Check, Plus, Trash2, GripVertical } from 'lucide-react';
+import { generatePlan } from '@/actions/generatePlanAction';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 const T = {
   surface:  'var(--folio-surface)',
@@ -27,93 +28,6 @@ const TYPE_ACCENTS: Record<string, string> = {
   nutrition: '#2E7D32',
 };
 
-// ─── LLM prompt ───────────────────────────────────────────────────────────────
-const LLM_PROMPT = `You are generating a structured protocol configuration for a web application called "Protocol".
-
-Your task is to convert the user's goals into a STRICT JSON object that follows the exact schema defined below.
-
----
-## ⚠️ CRITICAL RULES
-* Output ONLY valid JSON. No markdown, no code blocks, no extra text.
-* All fields must be present. Do NOT omit any keys.
-* Use consistent kebab-case IDs (e.g. "barre-chords", "squat-form", "chapter-1").
-* Keep values realistic, specific, and actionable.
-* module "order" values start at 1 and increment by 1. Never use 0.
-* For workout splits: each item in a day's array must be a SINGLE EXERCISE with its prescription (e.g. "Pull-ups — 4×8, rest 90s"). NEVER put session titles, durations, or day descriptions as the first array item — those go in "dayFocus" instead.
-* Rest days and active recovery days must have an EMPTY array [] in "split". Use "dayFocus" to label them (e.g. "Active Recovery", "Full Rest").
-* "focus" must be 1–2 sentences max. No bullet points, no multi-paragraph text.
-* If the plan includes a skill module (guitar, coding, language, etc.), do NOT add that skill as an exercise or activity inside the workout split. The skill module and any related habit handle it — duplicating it in the split creates conflicts.
-* Habits track DAILY behaviours. Do not add a habit for something already fully tracked by a module (e.g. no "practice guitar" habit if there is a skill module for guitar — unless the user explicitly wants a daily checkbox separate from session logging).
-
----
-## 🧠 ASK THE USER FOR
-* Their primary goal (e.g. "build muscle", "learn to code", "master a language")
-* Which modules they need — workout, skill, study, nutrition (any combination)
-* For workout: schedule, equipment, training style
-* For skill/study: the subject they want to develop (ANY subject)
-* Where they usually work (office vs home) — needed for nutrition
-* Experience level (beginner / intermediate / advanced)
-
----
-## 📦 REQUIRED JSON SCHEMA
-
-{
-  "metadata": {
-    "title": "short plan name, 2-4 words, e.g. 'Summer Shred', 'Year of Guitar'",
-    "goal": "one-sentence primary goal",
-    "level": "beginner | intermediate | advanced",
-    "version": 2,
-    "planType": "describe the plan type, e.g. workout+skill, study-only, full-stack"
-  },
-  "habits": [
-    {
-      "id": "unique-slug",
-      "name": "Habit Name",
-      "category": "fitness | skill | lifestyle | study | health"
-    }
-  ],
-  "modules": [
-    {
-      "id": "workout-main",
-      "type": "workout",
-      "title": "Training Protocol",
-      "order": 1,
-      "data": {
-        "focus": "One or two sentences describing the overall training approach and goal.",
-        "dayFocus": {
-          "Monday": "PULL — 35 min",
-          "Tuesday": "PUSH — 35 min",
-          "Wednesday": "LEGS + CORE — 40 min",
-          "Thursday": "Active Recovery",
-          "Friday": "UPPER — 50 min",
-          "Saturday": "Full Rest",
-          "Sunday": ""
-        },
-        "split": {
-          "Monday": ["Exercise Name — sets×reps, rest Xs", "Exercise Name — sets×reps, rest Xs"],
-          "Tuesday": [],
-          "Wednesday": ["Exercise Name — sets×reps, rest Xs"],
-          "Thursday": [],
-          "Friday": ["Exercise Name — sets×reps, rest Xs", "Exercise Name — sets×reps, rest Xs"],
-          "Saturday": [],
-          "Sunday": []
-        }
-      }
-    },
-    {
-      "id": "skill-main",
-      "type": "skill",
-      "title": "Skill Development",
-      "order": 2,
-      "data": {
-        "subject": "Subject name",
-        "nodes": [
-          { "id": "node-slug", "title": "Node title", "type": "milestone", "metric": { "type": "none" } }
-        ]
-      }
-    }
-  ]
-}`;
 
 // ─── Shared form primitives ───────────────────────────────────────────────────
 function FInput({
@@ -568,86 +482,87 @@ function ManualBuilder({ user }: { user: { id: string } }) {
   );
 }
 
-// ─── AI panels (original flow) ────────────────────────────────────────────────
-function AIPanels({ user }: { user: { id: string } }) {
-  const router = useRouter();
-  const [loading, setLoading]     = useState(false);
-  const [error,   setError]       = useState<string | null>(null);
-  const [jsonInput, setJsonInput] = useState('');
-  const [copied,  setCopied]      = useState(false);
+// ─── AI Generator ─────────────────────────────────────────────────────────────
+function AIGenerator({ user }: { user: { id: string } }) {
+  const [input,   setInput]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
 
-  const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(LLM_PROMPT);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleInitialize = async () => {
+  const handleGenerate = async () => {
+    if (!input.trim() || loading) return;
     setLoading(true);
     setError(null);
-    try {
-      let cleaned = jsonInput.trim();
-      if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '');
-      if (cleaned.startsWith('```'))     cleaned = cleaned.replace(/^```\n?/, '');
-      if (cleaned.endsWith('```'))       cleaned = cleaned.replace(/```$/, '');
-      cleaned = cleaned.replace(/\s*[\\\s]+$/, '').trim();
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (lastBrace !== -1) cleaned = cleaned.slice(0, lastBrace + 1);
-      let parsedPlan: Record<string, unknown>;
-      try { parsedPlan = JSON.parse(cleaned); }
-      catch { throw new Error('Invalid JSON — paste only the raw JSON object with no extra text.'); }
-      await createPlan(user.id, parsedPlan);
+    const result = await generatePlan(user.id, input.trim());
+    if (result.ok) {
       window.location.href = '/dashboard';
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unexpected error';
-      setError(message);
+    } else {
+      setError(result.error);
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-      {/* Step 1 */}
-      <div style={{ border: `1px solid ${T.rule}`, display: 'flex', flexDirection: 'column', height: 600 }}>
-        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.rule}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 4 }}>Step 1</div>
-            <div style={{ fontFamily: T.serifT, fontSize: 18, fontStyle: 'italic', color: T.ink }}>Generate with LLM</div>
-          </div>
-          <button onClick={handleCopyPrompt} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', border: `1px solid ${T.rule}`, background: copied ? T.tint : 'transparent', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: copied ? T.accent : T.stone }}>
-            {copied ? <><Check style={{ width: 11, height: 11 }} />Copied</> : <><Copy style={{ width: 11, height: 11 }} />Copy Prompt</>}
-          </button>
-        </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px', background: T.tint }}>
-          <pre style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.7 }}>
-            {LLM_PROMPT}
-          </pre>
-        </div>
+    <div style={{ border: `1px solid ${T.rule}`, maxWidth: 640 }}>
+      <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.rule}` }}>
+        <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 4 }}>Generate with AI</div>
+        <div style={{ fontFamily: T.serifT, fontSize: 18, fontStyle: 'italic', color: T.ink }}>Describe your goals</div>
       </div>
 
-      {/* Step 2 */}
-      <div style={{ border: `1px solid ${T.rule}`, display: 'flex', flexDirection: 'column', height: 600 }}>
-        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.rule}`, flexShrink: 0 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 4 }}>Step 2</div>
-          <div style={{ fontFamily: T.serifT, fontSize: 18, fontStyle: 'italic', color: T.ink }}>Paste &amp; Initialize</div>
-        </div>
-        {error && (
-          <div style={{ margin: 0, padding: '12px 20px', borderBottom: `1px solid ${T.negative}`, borderTop: `1px solid ${T.negative}`, flexShrink: 0 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.negative, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>Ingestion Failed</div>
-            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>{error}</div>
-          </div>
-        )}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <textarea value={jsonInput} onChange={e => setJsonInput(e.target.value)} placeholder="Paste JSON here…" spellCheck={false}
-            style={{ flex: 1, width: '100%', background: T.tint, border: 'none', outline: 'none', padding: '16px 20px', fontFamily: T.mono, fontSize: 11, color: T.ink, resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
-        </div>
-        <div style={{ padding: '14px 20px', borderTop: `1px solid ${T.rule}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <a href="/dashboard" style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textDecoration: 'underline', textUnderlineOffset: 3 }}>Cancel</a>
-          <button onClick={handleInitialize} disabled={loading || !jsonInput.trim()}
-            style={{ padding: '10px 24px', background: (!loading && jsonInput.trim()) ? T.ink : T.tint, color: (!loading && jsonInput.trim()) ? T.surface : T.stone, border: `1px solid ${(!loading && jsonInput.trim()) ? T.ink : T.rule}`, cursor: (!loading && jsonInput.trim()) ? 'pointer' : 'not-allowed', fontFamily: T.mono, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {loading ? <><Loader2 style={{ width: 12, height: 12, animation: 'spin 1s linear infinite' }} />Verifying…</> : 'Initialize Plan'}
+      {error && (
+        <div style={{ padding: '12px 20px', borderBottom: `1px solid ${T.negative}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.negative }}>{error}</span>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={loading}
+            style={{ background: 'none', border: `1px solid ${T.negative}`, padding: '4px 12px', cursor: 'pointer', fontFamily: T.mono, fontSize: 9, color: T.negative, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}
+          >
+            Retry
           </button>
         </div>
+      )}
+
+      <div style={{ padding: '20px' }}>
+        <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>Your Goals</div>
+        <textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          disabled={loading}
+          rows={6}
+          placeholder="e.g. I want to train 4 days a week for hypertrophy, learn guitar on the side, and track sleep and water as habits. Intermediate level, home gym."
+          style={{
+            width: '100%', background: T.tint, border: `1px solid ${T.rule}`,
+            outline: 'none', padding: '12px 14px', fontFamily: T.mono, fontSize: 11,
+            color: T.ink, resize: 'none', boxSizing: 'border-box', lineHeight: 1.6,
+            opacity: loading ? 0.5 : 1,
+          }}
+          onFocus={e => ((e.target as HTMLTextAreaElement).style.borderColor = T.accent)}
+          onBlur={e  => ((e.target as HTMLTextAreaElement).style.borderColor = T.rule)}
+        />
+      </div>
+
+      <div style={{ padding: '14px 20px', borderTop: `1px solid ${T.rule}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <a href="/dashboard" style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          Cancel
+        </a>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={loading || !input.trim()}
+          style={{
+            padding: '10px 28px',
+            background: (!loading && input.trim()) ? T.ink : T.tint,
+            color: (!loading && input.trim()) ? T.surface : T.stone,
+            border: `1px solid ${(!loading && input.trim()) ? T.ink : T.rule}`,
+            cursor: (!loading && input.trim()) ? 'pointer' : 'not-allowed',
+            fontFamily: T.mono, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          {loading
+            ? <><Loader2 style={{ width: 12, height: 12, animation: 'spin 1s linear infinite' }} />Generating…</>
+            : 'Generate Plan →'}
+        </button>
       </div>
     </div>
   );
@@ -694,7 +609,7 @@ export default function BuilderPage() {
           ))}
         </div>
 
-        {mode === 'manual' ? <ManualBuilder user={user} /> : <AIPanels user={user} />}
+        {mode === 'manual' ? <ManualBuilder user={user} /> : <AIGenerator user={user} />}
       </div>
     </div>
   );
