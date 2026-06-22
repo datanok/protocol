@@ -25,6 +25,43 @@ function toYmd(d: Date) {
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
+// ─── Mobile stat strip (replaces hidden Gloss panel on small screens) ──────────
+
+function MobileStatStrip({
+  streak, completedHabits, totalHabits, totalDirectives, completedDirectives, weekPct, loading,
+}: {
+  streak: number; completedHabits: number; totalHabits: number;
+  totalDirectives: number; completedDirectives: number; weekPct: number; loading: boolean;
+}) {
+  return (
+    <div className="db-mobile-stats">
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+        <span style={{ fontFamily: T.serifD, fontSize: 28, color: T.accent, lineHeight: 1, letterSpacing: '-1px' }}>
+          {loading ? '—' : streak}
+        </span>
+        <span style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.1em' }}>
+          day streak
+        </span>
+      </div>
+      <div style={{ width: 1, height: 14, background: T.ruleDark, flexShrink: 0 }} />
+      {totalHabits > 0 && (
+        <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>
+          <span style={{ color: T.ink }}>{completedHabits}</span>/{totalHabits} habits
+        </span>
+      )}
+      {totalDirectives > 0 && (
+        <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>
+          <span style={{ color: T.ink }}>{completedDirectives}</span>/{totalDirectives} sessions
+        </span>
+      )}
+      <div style={{ width: 1, height: 14, background: T.ruleDark, flexShrink: 0 }} />
+      <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>
+        <span style={{ color: T.ink }}>{loading ? '—' : weekPct}%</span> this week
+      </span>
+    </div>
+  );
+}
+
 function Eyebrow({ children, dim }: { children: React.ReactNode; dim?: boolean }) {
   return (
     <div style={{
@@ -93,6 +130,7 @@ function GlossPanel({
   totalDirectives,
   todayCommitted,
   weekPct,
+  loading,
 }: {
   streak: number;
   completedHabits: number;
@@ -100,17 +138,15 @@ function GlossPanel({
   totalDirectives: number;
   todayCommitted: boolean;
   weekPct: number;
+  loading: boolean;
 }) {
   const completedDirectives = todayCommitted ? totalDirectives : 0;
 
   return (
     <aside style={{
       padding: '64px 28px 64px 48px',
-      borderRight: `1px solid ${T.rule}`,
       position: 'sticky',
       top: 56,
-      alignSelf: 'start',
-      minHeight: 'calc(100vh - 56px)',
     }}>
       {/* Streak */}
       <Eyebrow>Streak</Eyebrow>
@@ -123,7 +159,7 @@ function GlossPanel({
         marginTop: 10,
         letterSpacing: '-2px',
       }}>
-        {streak}
+        {loading ? '—' : streak}
       </div>
       <div style={{ fontFamily: T.sans, fontSize: 12, color: T.stone, marginTop: 6 }}>
         days unbroken
@@ -137,7 +173,7 @@ function GlossPanel({
         {(totalHabits > 0 ? [
           ['Habits', completedHabits, totalHabits],
         ] : []).concat(totalDirectives > 0 ? [
-          ['Directives', completedDirectives, totalDirectives],
+          ['Sessions', completedDirectives, totalDirectives],
         ] : []).map(([k, a, b]) => (
           <div key={String(k)} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
             <span style={{ fontFamily: T.serifD, fontSize: 15, fontStyle: 'italic', color: T.stone }}>
@@ -164,7 +200,7 @@ function GlossPanel({
             fontFamily: T.serifD, fontSize: 36,
             fontWeight: 400, color: T.ink, letterSpacing: '-1px',
           }}>
-            {weekPct}
+            {loading ? '—' : weekPct}
           </span>
           <span style={{ fontFamily: T.mono, fontSize: 13, color: T.stone }}>%</span>
         </div>
@@ -178,21 +214,17 @@ function GlossPanel({
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
-function Hero({ goal, streak, level }: { goal: string; streak: number; level: string }) {
+function Hero({ goal, streak, level, todayCommitted, hasContent }: {
+  goal: string; streak: number; level: string; todayCommitted: boolean; hasContent: boolean;
+}) {
   const tier = goalFontTier(goal);
   return (
     <section>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <Eyebrow>Active protocol</Eyebrow>
-        {(level || streak > 0) && (
-          <span style={{
-            fontFamily: T.mono, fontSize: 10.5,
-            letterSpacing: '0.12em', color: T.stone, opacity: 0.6,
-          }}>
-            · {level && `${level.toUpperCase()} · `}day {streak}
-          </span>
-        )}
-      </div>
+      {(level || streak > 0) && (
+        <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: '0.12em', color: T.stone }}>
+          {level ? `${level.toUpperCase()} · day ${streak}` : `day ${streak}`}
+        </div>
+      )}
       {/* Reserve height so layout doesn't jump as goal length changes */}
       <div className="db-hero-min" style={{ minHeight: 128, marginTop: 14, display: 'flex', alignItems: 'flex-start' }}>
         <h1 className="db-hero-title" style={{
@@ -208,6 +240,24 @@ function Hero({ goal, streak, level }: { goal: string; streak: number; level: st
           {goal}
         </h1>
       </div>
+      {hasContent && (
+        <div style={{ marginTop: 20 }}>
+          {todayCommitted ? (
+            <span style={{ fontFamily: T.mono, fontSize: 10, color: T.positive, letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 5, height: 5, background: T.positive }} />
+              Day committed
+            </span>
+          ) : (
+            <Link href="/commit" className="db-commit-link" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: T.accent, textDecoration: 'none',
+            }}>
+              → Commit today
+            </Link>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -229,7 +279,7 @@ function TodaySection({
           Today
         </h2>
         <Eyebrow>
-          {directives.length} directive{directives.length !== 1 ? 's' : ''}
+          {directives.length} session{directives.length !== 1 ? 's' : ''}
         </Eyebrow>
       </div>
       <div style={{ height: 1, background: T.ruleDark, marginTop: 12 }} />
@@ -241,9 +291,9 @@ function TodaySection({
       ) : (
         <div>
           {directives.map((d, i) => (
-            <div key={d.moduleId} style={{
+            <div key={d.moduleId} className="db-today-row" style={{
               display: 'grid',
-              gridTemplateColumns: '110px 1fr 22px',
+              gridTemplateColumns: '110px 1fr',
               alignItems: 'center',
               gap: 20,
               padding: '20px 0',
@@ -252,7 +302,7 @@ function TodaySection({
               <span style={{
                 fontFamily: T.mono, fontSize: 10,
                 letterSpacing: '0.14em', textTransform: 'uppercase',
-                color: T.stone,
+                color: T.moduleColors[d.type as keyof typeof T.moduleColors] ?? T.stone,
               }}>
                 {moduleTypeLabel(d.type)}
               </span>
@@ -265,13 +315,6 @@ function TodaySection({
                   <span style={{ color: T.stone, fontStyle: 'italic', fontSize: 15 }}> — {d.subtitle}</span>
                 )}
               </div>
-              {/* Unchecked circle — directive completion not tracked */}
-              <div style={{
-                width: 13, height: 13,
-                border: `1.5px solid ${T.stone}`,
-                borderRadius: '50%',
-                flexShrink: 0,
-              }} />
             </div>
           ))}
         </div>
@@ -317,6 +360,7 @@ function HabitsSection({
               key={habit.id}
               onClick={() => onToggle(habit.id)}
               disabled={!!loading}
+              aria-pressed={done}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '8px 14px',
@@ -327,12 +371,11 @@ function HabitsSection({
                 letterSpacing: '0.02em',
                 cursor: loading ? 'wait' : 'pointer',
                 opacity: loading ? 0.5 : 1,
-                transition: 'all 0.1s ease',
+                transition: 'background 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out, opacity 0.15s ease-out',
               }}
             >
               <span style={{
-                width: 6, height: 6,
-                borderRadius: '50%',
+                width: 5, height: 5,
                 background: done ? T.surface : T.stone,
                 flexShrink: 0,
                 opacity: done ? 0.85 : 1,
@@ -366,7 +409,12 @@ function ModulesSection({
         }}>
           Modules
         </h2>
-        <Eyebrow>{modules.length} active</Eyebrow>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <Eyebrow>{modules.length} active</Eyebrow>
+          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em' }}>
+            · {weekPct}% this week
+          </span>
+        </div>
       </div>
       <div style={{ height: 1, background: T.ruleDark, marginTop: 12 }} />
       <div>
@@ -382,30 +430,28 @@ function ModulesSection({
               padding: '22px 0',
               borderBottom: i < modules.length - 1 ? `1px solid ${T.rule}` : 'none',
             }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div>
+                  <div style={{
+                    fontFamily: T.mono, fontSize: 9.5,
+                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: T.moduleColors[mod.type as keyof typeof T.moduleColors] ?? T.stone,
+                    marginBottom: 6,
+                  }}>
+                    {moduleTypeLabel(mod.type)}
+                  </div>
                   <div style={{ fontFamily: T.serifD, fontSize: 20, fontWeight: 400, color: T.ink }}>
                     {mod.title}
                   </div>
                   {meta && (
-                    <div style={{ fontFamily: T.sans, fontSize: 13, color: T.stone, marginTop: 3 }}>
+                    <div style={{ fontFamily: T.mono, fontSize: 11.5, color: T.stone, marginTop: 5, letterSpacing: '0.02em' }}>
                       {meta}
                     </div>
                   )}
                 </div>
-                <div style={{
-                  fontFamily: T.mono, fontSize: 13, color: T.stone,
-                  flexShrink: 0, fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {weekPct}%
-                </div>
-              </div>
-              {/* 2px progress bar */}
-              <div style={{ position: 'relative', marginTop: 14, height: 2, background: T.rule }}>
-                <div style={{
-                  position: 'absolute', left: 0, top: 0, height: 2,
-                  width: `${weekPct}%`, background: T.ink,
-                }} />
+                <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, flexShrink: 0, marginTop: 2 }}>
+                  {href ? '→' : ''}
+                </span>
               </div>
             </div>
           );
@@ -413,7 +459,7 @@ function ModulesSection({
           return (
             <div key={mod.id}>
               {href ? (
-                <Link href={href} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <Link href={href} className="db-module-link">
                   {inner}
                 </Link>
               ) : inner}
@@ -446,7 +492,7 @@ function ConsistencyGrid({ commitDates }: { commitDates: Set<string> }) {
   }
 
   const keptCount = cells.filter(d => d < todayStr && commitDates.has(d)).length;
-  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const dayLabels = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
 
   return (
     <section style={{ marginTop: 56, marginBottom: 80 }}>
@@ -510,18 +556,18 @@ function ConsistencyGrid({ commitDates }: { commitDates: Set<string> }) {
               </span>
             ))}
           </div>
-          <div style={{
-            marginTop: 18,
-            paddingLeft: 14,
-            borderLeft: `2px solid ${T.accent}`,
-            fontFamily: T.serifD,
-            fontSize: 15,
-            fontStyle: 'italic',
-            color: T.stone,
-            lineHeight: 1.6,
-            maxWidth: 300,
-          }}>
-            {keptCount} of {cells.filter(d => d < todayStr).length} days committed.
+          <div style={{ marginTop: 18, display: 'flex', gap: 12 }}>
+            <div style={{ width: 4, background: T.accent, flexShrink: 0 }} />
+            <div style={{
+              fontFamily: T.serifD,
+              fontSize: 15,
+              fontStyle: 'italic',
+              color: T.stone,
+              lineHeight: 1.6,
+              maxWidth: 300,
+            }}>
+              {keptCount} of {cells.filter(d => d < todayStr).length} days committed.
+            </div>
           </div>
         </div>
       </div>
@@ -536,7 +582,7 @@ export default function FolioDashboard() {
   const plan = usePlan();
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: stats } = useDashboardStats(user?.id);
+  const { data: stats, isLoading: statsLoading } = useDashboardStats(user?.id);
 
   // 28-day commit dates for the consistency grid
   const { data: commitDates = new Set<string>() } = useQuery({
@@ -590,19 +636,29 @@ export default function FolioDashboard() {
   }
 
   const completedHabits = vm.today.habits.filter(h => completed.has(h.id)).length;
+  const hasContent = plan.modules.length > 0 || plan.habits.length > 0;
 
   return (
     <div style={{ minHeight: '100vh', background: T.surface, color: T.ink, fontFamily: T.sans }}>
       <style>{`
-        .db-gloss { display: block; }
+        .db-gloss { display: block; min-height: calc(100vh - 56px); background: var(--folio-tint); }
         .db-body  { padding: 64px 80px 80px 56px; }
+        .db-mobile-stats { display: none; }
+        .db-commit-link { transition: opacity 0.15s ease-out; }
+        .db-commit-link:hover { opacity: 0.65; }
+        .db-module-link { display: block; text-decoration: none; color: inherit; transition: background 0.15s ease-out; }
+        .db-module-link:hover { background: var(--folio-tint); }
         @media (max-width: 820px) {
           .db-gloss           { display: none !important; }
           .db-body            { padding: 32px 24px 64px !important; }
           .db-grid            { grid-template-columns: 1fr !important; }
-          .db-today-row       { grid-template-columns: 90px 1fr 22px !important; gap: 12px !important; }
+          .db-today-row       { grid-template-columns: 90px 1fr !important; gap: 12px !important; }
           .db-hero-title      { font-size: clamp(22px, 7vw, 32px) !important; line-height: 1.15 !important; letter-spacing: -0.5px !important; }
           .db-hero-min        { min-height: 0 !important; }
+          .db-mobile-stats    { display: flex !important; flex-wrap: wrap; align-items: baseline; gap: 10px 20px; padding-bottom: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--folio-rule); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .db-commit-link, .db-module-link { transition: none; }
         }
       `}</style>
 
@@ -622,25 +678,58 @@ export default function FolioDashboard() {
               totalDirectives={vm.today.directives.length}
               todayCommitted={todayCommitted}
               weekPct={weekPct}
+              loading={statsLoading}
             />
           </div>
 
           {/* ── Right: Editorial body ─────────────────────────────────── */}
           <div className="db-body">
+            <MobileStatStrip
+              streak={streak}
+              completedHabits={completedHabits}
+              totalHabits={vm.today.habits.length}
+              totalDirectives={vm.today.directives.length}
+              completedDirectives={todayCommitted ? vm.today.directives.length : 0}
+              weekPct={weekPct}
+              loading={statsLoading}
+            />
             <Hero
               goal={plan.metadata.title || plan.metadata.goal || 'No active protocol set.'}
               streak={streak}
               level={plan.metadata.level}
+              todayCommitted={todayCommitted}
+              hasContent={hasContent}
             />
-            <TodaySection directives={vm.today.directives} />
-            <HabitsSection
-              habits={vm.today.habits}
-              completed={completed}
-              saving={saving}
-              onToggle={toggleHabit}
-            />
-            <ModulesSection modules={vm.modules} weekPct={weekPct} />
-            <ConsistencyGrid commitDates={commitDates} />
+            {hasContent ? (
+              <>
+                <TodaySection directives={vm.today.directives} />
+                <HabitsSection
+                  habits={vm.today.habits}
+                  completed={completed}
+                  saving={saving}
+                  onToggle={toggleHabit}
+                />
+                <ModulesSection modules={vm.modules} weekPct={weekPct} />
+                <ConsistencyGrid commitDates={commitDates} />
+              </>
+            ) : (
+              <section style={{ marginTop: 72, paddingTop: 40, borderTop: `1px solid ${T.rule}` }}>
+                <div style={{ fontFamily: T.serifD, fontSize: 18, fontStyle: 'italic', color: T.stone, marginBottom: 16 }}>
+                  No active plan.
+                </div>
+                <p style={{ fontFamily: T.mono, fontSize: 12, color: T.stone, lineHeight: 1.7, marginBottom: 24, letterSpacing: '0.04em', maxWidth: 400 }}>
+                  Build a plan to start logging your workouts, skills, study sessions, and habits.
+                </p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <Link href="/builder" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 20px', background: T.ink, color: T.surface, fontFamily: T.mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                    Build a plan
+                  </Link>
+                  <Link href="/templates" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 20px', border: `1px solid ${T.rule}`, color: T.stone, fontFamily: T.mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                    Browse templates
+                  </Link>
+                </div>
+              </section>
+            )}
           </div>
 
         </div>
