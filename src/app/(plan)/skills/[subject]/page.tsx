@@ -78,7 +78,7 @@ function LogSessionModal({
             </div>
             <div style={{ fontFamily: T.serifT, fontSize: 18, fontStyle: 'italic', color: T.ink }}>{subject}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.stone, padding: 4, marginTop: -2 }}>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.stone, padding: 4, marginTop: -2 }}>
             <X style={{ width: 16, height: 16 }} />
           </button>
         </div>
@@ -86,7 +86,7 @@ function LogSessionModal({
         {/* Body */}
         <div style={{ padding: '20px 20px 0' }}>
           {error && (
-            <div style={{ marginBottom: 16, padding: '10px 14px', borderLeft: `3px solid ${T.negative}`, background: T.tint, fontFamily: T.mono, fontSize: 10, color: T.negative }}>
+            <div style={{ marginBottom: 16, padding: '10px 14px', border: `1px solid ${T.negative}`, background: T.tint, fontFamily: T.mono, fontSize: 10, color: T.negative }}>
               {error}
             </div>
           )}
@@ -104,7 +104,7 @@ function LogSessionModal({
                 onFocus={e => ((e.target as HTMLInputElement).style.borderColor = T.accent)}
                 onBlur={e  => ((e.target as HTMLInputElement).style.borderColor = T.rule)}
               />
-              <div style={{ fontFamily: T.mono, fontSize: 8, color: T.stone, marginTop: 4 }}>≈ {durationMin * 10} XP</div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, marginTop: 4 }}>≈ {durationMin * 10} XP</div>
             </div>
 
             {/* Node */}
@@ -112,14 +112,19 @@ function LogSessionModal({
               <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>
                 Node / Focus
               </div>
-              <select
-                value={nodeId}
-                onChange={e => setNodeId(e.target.value)}
-                style={{ width: '100%', background: T.tint, border: `1px solid ${T.rule}`, outline: 'none', padding: '8px 10px', fontFamily: T.mono, fontSize: 11, color: T.ink, boxSizing: 'border-box', appearance: 'none' }}
-              >
-                <option value="">(auto)</option>
-                {nodes.map(n => <option key={n.id} value={n.id}>{n.title}</option>)}
-              </select>
+              <div className="sk-select-wrap">
+                <select
+                  value={nodeId}
+                  onChange={e => setNodeId(e.target.value)}
+                  className="sk-select"
+                  style={{ width: '100%', background: T.tint, border: `1px solid ${T.rule}`, outline: 'none', padding: '8px 28px 8px 10px', fontFamily: T.mono, fontSize: 11, color: T.ink, boxSizing: 'border-box' }}
+                  onFocus={e => ((e.target as HTMLSelectElement).style.borderColor = T.accent)}
+                  onBlur={e  => ((e.target as HTMLSelectElement).style.borderColor = T.rule)}
+                >
+                  <option value="">(auto)</option>
+                  {nodes.map(n => <option key={n.id} value={n.id}>{n.title}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -131,6 +136,7 @@ function LogSessionModal({
             <div style={{ display: 'flex', gap: 6 }}>
               {[1,2,3,4,5].map(n => (
                 <button key={n} type="button" onClick={() => setQuality(n)}
+                  className={`sk-quality-btn${n <= quality ? ' is-active' : ''}`}
                   style={{ width: 36, height: 36, border: `1px solid ${n <= quality ? T.ink : T.rule}`, background: n <= quality ? T.ink : 'transparent', cursor: 'pointer', fontFamily: T.mono, fontSize: 11, color: n <= quality ? T.surface : T.stone }}>
                   {n}
                 </button>
@@ -158,10 +164,12 @@ function LogSessionModal({
         {/* Footer */}
         <div style={{ padding: '14px 20px', borderTop: `1px solid ${T.rule}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button onClick={onClose} disabled={saving}
+            className="sk-btn-ghost"
             style={{ background: 'none', border: `1px solid ${T.rule}`, padding: '8px 16px', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Cancel
           </button>
           <button onClick={save} disabled={saving}
+            className="sk-btn-primary"
             style={{ padding: '8px 24px', background: saving ? T.tint : T.ink, color: saving ? T.stone : T.surface, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: T.mono, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
             {saving ? <><Loader2 style={{ width: 12, height: 12, animation: 'spin 1s linear infinite' }} />Saving…</> : 'Log Session'}
           </button>
@@ -202,7 +210,7 @@ create policy "Own node progress"   on skill_node_progress
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
 
   return (
-    <div style={{ border: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.accent}`, padding: '16px 20px', marginBottom: 28 }}>
+    <div style={{ border: `1px solid ${T.rule}`, padding: '16px 20px', marginBottom: 28 }}>
       <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>
         Setup Required
       </div>
@@ -220,7 +228,7 @@ create policy "Own node progress"   on skill_node_progress
 const STATUS_COLORS: Record<string, string> = {
   completed:   T.positive,
   'in-progress': T.accent,
-  locked:      T.rule,
+  locked:      T.stone,
 };
 
 
@@ -322,17 +330,33 @@ function SkillPageContent() {
   // ── Full page ──────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: T.surface, color: T.ink }}>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .sk-btn-log:hover    { opacity: 0.85; }
+        .sk-btn-primary:hover:not(:disabled) { opacity: 0.85; }
+        .sk-btn-ghost:hover:not(:disabled)   { background: var(--folio-tint) !important; }
+        .sk-quality-btn:not(.is-active):hover { border-color: var(--folio-stone) !important; background: var(--folio-tint) !important; color: var(--folio-ink) !important; }
+        .sk-btn-log, .sk-btn-primary, .sk-btn-ghost, .sk-quality-btn { transition: opacity 0.15s, background 0.15s, border-color 0.15s; }
+        .sk-select-wrap { position: relative; }
+        .sk-select-wrap::after { content: ''; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--folio-stone); pointer-events: none; }
+        .sk-select { appearance: none; -webkit-appearance: none; }
+        @media (max-width: 768px) {
+          .sk-main { padding: 56px 16px 64px !important; }
+          .sk-h1   { font-size: 28px !important; }
+          .sk-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}><AppTopNav /></div>
 
-      <main style={{ paddingTop: 56, maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
+      <main className="sk-main" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div style={{ paddingTop: 36, paddingBottom: 24, borderBottom: `1px solid ${T.ink}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 8 }}>
               Skill Tree
             </div>
-            <h1 style={{ fontFamily: T.serifD, fontSize: 40, color: T.ink, margin: 0, lineHeight: 1.05 }}>
+            <h1 className="sk-h1" style={{ fontFamily: T.serifD, fontSize: 40, color: T.ink, margin: 0, lineHeight: 1.05 }}>
               {skillData.subject}
             </h1>
             <div style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, marginTop: 10 }}>
@@ -349,6 +373,7 @@ function SkillPageContent() {
           </div>
           <button
             onClick={() => setLogOpen(true)}
+            className="sk-btn-log"
             style={{
               padding: '10px 20px', background: T.ink, color: T.surface,
               fontFamily: T.mono, fontSize: 10, letterSpacing: '0.15em',
@@ -362,8 +387,8 @@ function SkillPageContent() {
 
         {/* ── Progress bar ─────────────────────────────────────────────── */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ height: 2, background: T.rule, position: 'relative', marginTop: 16 }}>
-            <div style={{ position: 'absolute', left: 0, top: -1, width: `${completionPct}%`, height: 4, background: T.ink, transition: 'width 0.4s' }} />
+          <div style={{ height: 2, background: T.rule, position: 'relative', marginTop: 16, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: 0, top: -1, width: '100%', height: 4, background: T.ink, transform: `scaleX(${(completionPct / 100).toFixed(3)})`, transformOrigin: 'left center', transition: 'transform 0.3s ease-out' }} />
           </div>
         </div>
 
@@ -371,11 +396,11 @@ function SkillPageContent() {
         {needsMigration && <MigrationNotice subject={skillData.subject} />}
 
         {/* ── Content grid ──────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 32 }}>
+        <div className="sk-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 32 }}>
 
           {/* Nodes list */}
           <div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 12 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 12 }}>
               Nodes — {planNodes.length} total
             </div>
             <div style={{ height: 1, background: T.rule }} />
@@ -384,6 +409,15 @@ function SkillPageContent() {
               <div style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, padding: '24px 0' }}>
                 No nodes defined. <Link href="/plan" style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 3 }}>Edit plan →</Link>
               </div>
+            ) : historyLoading ? (
+              <>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{ height: 56, borderBottom: `1px solid ${T.rule}`, display: 'flex', alignItems: 'center', gap: 12, padding: '0 0', opacity: 0.4 - i * 0.1 }}>
+                    <div style={{ width: 8, height: 8, background: T.rule, flexShrink: 0 }} />
+                    <div style={{ height: 10, width: `${120 + i * 40}px`, background: T.rule }} />
+                  </div>
+                ))}
+              </>
             ) : planNodes.map((node, idx) => {
               const progress  = nodeProgress[node.id];
               const status    = progress?.status ?? (idx === 0 ? 'in-progress' : 'locked');
@@ -438,7 +472,7 @@ function SkillPageContent() {
 
           {/* Recent sessions */}
           <div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 12 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 12 }}>
               Recent Sessions
             </div>
             <div style={{ height: 1, background: T.rule }} />
@@ -484,7 +518,7 @@ function SkillPageContent() {
                       </div>
                     )}
                     {s.notes && (
-                      <div style={{ fontFamily: T.serifT, fontSize: 13, color: T.ink, fontStyle: 'italic', lineHeight: 1.5 }}>
+                      <div style={{ fontFamily: T.sans, fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
                         {s.notes}
                       </div>
                     )}
