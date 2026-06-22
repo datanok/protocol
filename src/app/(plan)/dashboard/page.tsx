@@ -629,6 +629,7 @@ export default function FolioDashboard() {
         .db-gloss { display: block; }
         .db-body  { padding: 64px 80px 80px 56px; }
         .db-mobile-stats { display: none; }
+        .db-mobile-cta { display: none; }
         @media (max-width: 820px) {
           .db-gloss           { display: none !important; }
           .db-body            { padding: 32px 24px 64px !important; }
@@ -637,6 +638,7 @@ export default function FolioDashboard() {
           .db-hero-title      { font-size: clamp(22px, 7vw, 32px) !important; line-height: 1.15 !important; letter-spacing: -0.5px !important; }
           .db-hero-min        { min-height: 0 !important; }
           .db-mobile-stats    { display: flex !important; flex-wrap: wrap; align-items: baseline; gap: 10px 20px; padding-bottom: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--folio-rule); }
+          .db-mobile-cta      { display: flex !important; }
         }
       `}</style>
 
@@ -689,6 +691,24 @@ export default function FolioDashboard() {
 
         </div>
       </main>
+
+      {/* Mobile sticky commit bar */}
+      {!todayCommitted && vm.modules.length > 0 && (
+        <div className="db-mobile-cta" style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          height: 56,
+          alignItems: 'center', justifyContent: 'center',
+          background: T.surface, borderTop: `1px solid ${T.rule}`,
+          zIndex: 40,
+        }}>
+          <Link href="/commit" style={{
+            fontFamily: T.mono, fontSize: 10, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: T.accent, textDecoration: 'none',
+          }}>
+            → Commit today
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
