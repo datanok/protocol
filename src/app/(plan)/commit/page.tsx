@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, X, Plus, Minus } from 'lucide-react';
 import { usePlan, useDashboardVM } from '@/contexts/PlanContext';
@@ -18,6 +18,7 @@ import type {
 } from '@/types/schema';
 
 import { T } from '@/lib/tokens';
+import { FolioInput, FolioTextarea } from '@/components/ui/FolioUI';
 
 const TYPE_ACCENTS: Record<string, string> = T.moduleColors;
 
@@ -38,38 +39,6 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FolioInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      style={{
-        background: T.tint, border: `1px solid ${T.rule}`, outline: 'none',
-        padding: '7px 10px', fontFamily: T.mono, fontSize: 12, color: T.ink,
-        width: '100%', boxSizing: 'border-box', textAlign: 'center',
-        ...props.style,
-      }}
-      onFocus={e => { (e.target as HTMLInputElement).style.borderColor = T.accent; props.onFocus?.(e); }}
-      onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = T.rule;   props.onBlur?.(e);  }}
-    />
-  );
-}
-
-function FolioTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      style={{
-        width: '100%', background: T.tint, border: `1px solid ${T.rule}`,
-        outline: 'none', padding: '10px 12px', fontFamily: T.mono, fontSize: 11,
-        color: T.ink, resize: 'none', boxSizing: 'border-box', lineHeight: 1.6,
-        ...props.style,
-      }}
-      onFocus={e => { (e.target as HTMLTextAreaElement).style.borderColor = T.accent; props.onFocus?.(e); }}
-      onBlur={e  => { (e.target as HTMLTextAreaElement).style.borderColor = T.rule;   props.onBlur?.(e);  }}
-    />
-  );
-}
-
 const RATING_OPTIONS = [
   { value: 1, label: 'Low'  },
   { value: 3, label: 'OK'   },
@@ -87,6 +56,8 @@ function RatingInput({ value, onChange, label }: { value: number; onChange: (v: 
           return (
             <button
               key={opt.value} type="button" onClick={() => onChange(opt.value)}
+              aria-pressed={on}
+              className="ci-toggle-btn"
               style={{
                 padding: '6px 16px',
                 border: `1px solid ${on ? T.ink : T.rule}`,
@@ -106,7 +77,7 @@ function RatingInput({ value, onChange, label }: { value: number; onChange: (v: 
 }
 
 // ─── SectionShell ─────────────────────────────────────────────────────────────
-// Header: "01  TYPE · TITLE". Accent bar turns green when done.
+// Header: "01  TYPE · TITLE". Border turns green when done.
 function SectionShell({
   index, type, title, subtitle, done, children,
 }: {
@@ -117,18 +88,18 @@ function SectionShell({
   done?:     boolean;
   children:  React.ReactNode;
 }) {
-  const barColor = done ? T.positive : (TYPE_ACCENTS[type] ?? T.stone);
+  const accentColor = done ? T.positive : (TYPE_ACCENTS[type] ?? T.stone);
+  const edgeColor   = done ? T.positive : T.rule;
   return (
-    <div style={{ border: `1px solid ${T.rule}`, position: 'relative', marginBottom: 16 }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: barColor, transition: 'background 0.2s' }} />
+    <div style={{ border: `1px solid ${edgeColor}`, transition: 'border-color 0.2s ease-out', marginBottom: 16 }}>
 
-      <div style={{ padding: '14px 16px 14px 20px', borderBottom: `1px solid ${T.rule}` }}>
+      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${edgeColor}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, flexShrink: 0, letterSpacing: '0.06em' }}>
+          <span style={{ fontFamily: T.mono, fontSize: 10, color: accentColor, flexShrink: 0, letterSpacing: '0.06em' }}>
             {String(index).padStart(2, '0')}
           </span>
           <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: barColor }}>
+            <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: accentColor }}>
               {type}
             </span>
             <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>{' · '}</span>
@@ -161,9 +132,17 @@ type WorkoutLog   = { exerciseLogs: ExerciseLogs; notes: string };
 type PracticeLog  = { nodeId: string; durationMin: number; rating: number; notes: string; skip: boolean };
 type NutritionLog = { context: 'wfo' | 'wfh'; adherence: 'hit' | 'partial' | 'missed' | null; notes: string; skip: boolean };
 
+const DAY_FULL  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
 // ─── Workout section ──────────────────────────────────────────────────────────
-function WorkoutSection({ data, dayName, log, onChange }: {
-  data: WorkoutModuleData; dayName: string; log: WorkoutLog; onChange: (l: WorkoutLog) => void;
+function WorkoutSection({ data, dayName, todayName, log, onChange, onDayChange }: {
+  data:        WorkoutModuleData;
+  dayName:     string; // currently selected day
+  todayName:   string; // actual calendar day
+  log:         WorkoutLog;
+  onChange:    (l: WorkoutLog) => void;
+  onDayChange: (day: string) => void;
 }) {
   const [showNotes, setShowNotes] = useState(false);
   const exercises = data.split[dayName] ?? [];
@@ -180,19 +159,63 @@ function WorkoutSection({ data, dayName, log, onChange }: {
     onChange({ ...log, exerciseLogs: { ...log.exerciseLogs, [ex]: sets } });
   }
 
-  if (exercises.length === 0) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
-        <div style={{ width: 6, height: 6, background: T.stone }} />
-        <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Rest day — no training scheduled
-        </span>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+      {/* Day picker — lets user log any day's split */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginBottom: 6 }}>
+          Logging exercises from
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', border: `1px solid ${T.rule}` }}>
+          {DAY_FULL.map((day, i) => {
+            const hasWork  = (data.split[day] ?? []).length > 0;
+            const isActive = day === dayName;
+            const isToday  = day === todayName;
+            return (
+              <button
+                key={day} type="button"
+                onClick={() => onDayChange(day)}
+                className={isActive ? 'ci-day-btn ci-day-active' : 'ci-day-btn'}
+                style={{
+                  padding: '7px 0',
+                  background: isActive ? T.ink : 'transparent',
+                  border: 'none',
+                  borderRight: i < 6 ? `1px solid ${T.rule}` : 'none',
+                  borderBottom: isActive ? `2px solid ${T.accent}` : '2px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                }}
+              >
+                <span style={{
+                  fontFamily: T.mono, fontSize: 10, letterSpacing: '0.08em',
+                  color: isActive ? T.surface : isToday ? T.accent : T.stone,
+                }}>
+                  {DAY_SHORT[i]}
+                </span>
+                <span style={{
+                  width: 3, height: 3,
+                  background: hasWork ? (isActive ? T.accent : T.stone) : 'transparent',
+                }} />
+              </button>
+            );
+          })}
+        </div>
+        {dayName !== todayName && (
+          <div style={{ fontFamily: T.mono, fontSize: 10, color: T.accent, letterSpacing: '0.08em', marginTop: 5 }}>
+            ← logging {dayName}&apos;s exercises · logged as today
+          </div>
+        )}
+      </div>
+
+      {exercises.length === 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', marginBottom: 8 }}>
+          <div style={{ width: 6, height: 6, background: T.stone }} />
+          <span style={{ fontFamily: T.mono, fontSize: 11, color: T.stone, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            No exercises scheduled for {dayName}
+          </span>
+        </div>
+      )}
       {exercises.map((ex, exIdx) => (
         <div key={ex} style={{ borderBottom: `1px solid ${T.rule}`, paddingBottom: 16, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -210,7 +233,7 @@ function WorkoutSection({ data, dayName, log, onChange }: {
 
           <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 1fr 22px', gap: 8, paddingBottom: 6, marginLeft: 32 }}>
             {['Set', 'kg', 'Reps', ''].map(h => (
-              <span key={h} style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>{h}</span>
+              <span key={h} style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>{h}</span>
             ))}
           </div>
 
@@ -233,11 +256,12 @@ function WorkoutSection({ data, dayName, log, onChange }: {
       ))}
 
       {/* Workout notes — collapsed by default */}
-      {showNotes ? (
+      {exercises.length > 0 && showNotes ? (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <Label>Session Notes</Label>
             <button type="button" onClick={() => setShowNotes(false)}
+              className="ci-text-btn"
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em' }}>
               hide ×
             </button>
@@ -248,10 +272,13 @@ function WorkoutSection({ data, dayName, log, onChange }: {
           />
         </div>
       ) : (
-        <button type="button" onClick={() => setShowNotes(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textAlign: 'left', padding: 0 }}>
-          + Add session note
-        </button>
+        exercises.length > 0 ? (
+          <button type="button" onClick={() => setShowNotes(true)}
+            className="ci-text-btn"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textAlign: 'left', padding: 0 }}>
+            + Add session note
+          </button>
+        ) : null
       )}
     </div>
   );
@@ -287,12 +314,17 @@ function PracticeSection({ subject, nodes, log, onChange, ratingLabel }: {
       <div style={{ opacity: log.skip ? 0.3 : 1, pointerEvents: log.skip ? 'none' : 'auto', transition: 'opacity 0.15s', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div>
-            <Label>Node / Focus</Label>
+            <Label>Topic / Node</Label>
+            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, marginBottom: 6, letterSpacing: '0.06em' }}>
+              which part of your path
+            </div>
             <select
               value={log.nodeId}
               onChange={e => onChange({ ...log, nodeId: e.target.value })}
+              onFocus={e => { (e.target as HTMLSelectElement).style.borderColor = T.accent; }}
+              onBlur={e  => { (e.target as HTMLSelectElement).style.borderColor = T.rule;   }}
               style={{
-                marginTop: 8, width: '100%', background: T.tint, border: `1px solid ${T.rule}`,
+                marginTop: 0, width: '100%', background: T.tint, border: `1px solid ${T.rule}`,
                 outline: 'none', padding: '7px 10px', fontFamily: T.mono, fontSize: 11,
                 color: T.ink, boxSizing: 'border-box', appearance: 'none',
               }}
@@ -325,6 +357,7 @@ function PracticeSection({ subject, nodes, log, onChange, ratingLabel }: {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <Label>Session Notes</Label>
               <button type="button" onClick={() => setShowNotes(false)}
+                className="ci-text-btn"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em' }}>
                 hide ×
               </button>
@@ -337,6 +370,7 @@ function PracticeSection({ subject, nodes, log, onChange, ratingLabel }: {
           </div>
         ) : (
           <button type="button" onClick={() => setShowNotes(true)}
+            className="ci-text-btn"
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textAlign: 'left', padding: 0 }}>
             + Add note
           </button>
@@ -378,6 +412,8 @@ function NutritionSection({ data, log, onChange }: {
             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
               {(['wfh', 'wfo'] as const).map(ctx => (
                 <button key={ctx} type="button" onClick={() => onChange({ ...log, context: ctx })}
+                  aria-pressed={log.context === ctx}
+                  className="ci-toggle-btn"
                   style={{
                     padding: '6px 12px', cursor: 'pointer',
                     border: `1px solid ${log.context === ctx ? T.ink : T.rule}`,
@@ -401,6 +437,8 @@ function NutritionSection({ data, log, onChange }: {
               ] as const).map(opt => (
                 <button key={opt.key} type="button"
                   onClick={() => onChange({ ...log, adherence: opt.key })}
+                  aria-pressed={log.adherence === opt.key}
+                  className="ci-toggle-btn"
                   style={{
                     padding: '6px 10px', cursor: 'pointer',
                     border: `1px solid ${log.adherence === opt.key ? opt.color : T.rule}`,
@@ -417,7 +455,7 @@ function NutritionSection({ data, log, onChange }: {
 
         {/* Target */}
         {target && (
-          <div style={{ padding: '8px 12px', background: T.tint, border: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.moduleColors.nutrition}` }}>
+          <div style={{ padding: '8px 12px', background: T.tint, border: `1px solid ${T.rule}` }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, marginBottom: 4 }}>TARGET</div>
             <div style={{ fontFamily: T.serifD, fontSize: 13, color: T.ink, lineHeight: 1.5, fontStyle: 'italic' }}>
               {target}
@@ -431,6 +469,7 @@ function NutritionSection({ data, log, onChange }: {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <Label>Notes</Label>
               <button type="button" onClick={() => setShowNotes(false)}
+                className="ci-text-btn"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em' }}>
                 hide ×
               </button>
@@ -441,6 +480,7 @@ function NutritionSection({ data, log, onChange }: {
           </div>
         ) : (
           <button type="button" onClick={() => setShowNotes(true)}
+            className="ci-text-btn"
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textAlign: 'left', padding: 0 }}>
             + Add note
           </button>
@@ -473,11 +513,14 @@ function HabitsSection({ habits, checked, onChange }: {
         <span style={{ fontFamily: T.mono, fontSize: 11, color: done === total ? T.positive : T.stone }}>
           {done}/{total} completed
         </span>
-        <div style={{ flex: 1, height: 2, background: T.rule, position: 'relative' }}>
+        <div style={{ flex: 1, height: 2, background: T.rule, position: 'relative', overflow: 'hidden' }}>
           <div style={{
             position: 'absolute', left: 0, top: -1,
-            width: `${total > 0 ? Math.round((done / total) * 100) : 0}%`,
-            height: 4, background: done === total ? T.positive : T.ink, transition: 'width 0.3s',
+            width: '100%', height: 4,
+            background: done === total ? T.positive : T.ink,
+            transform: `scaleX(${total > 0 ? (done / total).toFixed(3) : 0})`,
+            transformOrigin: 'left center',
+            transition: 'transform 0.25s ease-out',
           }} />
         </div>
       </div>
@@ -487,6 +530,8 @@ function HabitsSection({ habits, checked, onChange }: {
           <button
             key={h.id} type="button"
             onClick={() => onChange(h.id, !checked[h.id])}
+            aria-pressed={checked[h.id]}
+            className="ci-habit-btn"
             style={{
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 0',
@@ -513,7 +558,7 @@ function HabitsSection({ habits, checked, onChange }: {
                 {h.name}
               </div>
             </div>
-            <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, flexShrink: 0 }}>
+            <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, flexShrink: 0 }}>
               {h.category}
             </span>
           </button>
@@ -536,16 +581,29 @@ function CommitPageContent() {
   const alreadyCommitted = stats?.commits.todayCommitted ?? false;
 
   // ── Workout ────────────────────────────────────────────────────────────────
-  const workoutMod     = plan.modules.find(m => m.type === 'workout');
-  const workoutData    = workoutMod?.data as WorkoutModuleData | undefined;
-  const todayExercises = workoutData?.split?.[today.dayName] ?? [];
+  const workoutMod  = plan.modules.find(m => m.type === 'workout');
+  const workoutData = workoutMod?.data as WorkoutModuleData | undefined;
+
+  const [workoutDayName, setWorkoutDayName] = useState(today.dayName);
+  const selectedExercises = workoutData?.split?.[workoutDayName] ?? [];
+  // keep todayExercises alias so save logic below still reads correctly
+  const todayExercises = selectedExercises;
 
   const initialWorkoutLogs = useMemo<ExerciseLogs>(
-    () => Object.fromEntries(todayExercises.map(ex => [ex, [{ weight: '', reps: '' }]])),
+    () => Object.fromEntries(selectedExercises.map(ex => [ex, [{ weight: '', reps: '' }]])),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
   const [workoutLog, setWorkoutLog] = useState<WorkoutLog>({ exerciseLogs: initialWorkoutLogs, notes: '' });
+
+  function handleWorkoutDayChange(day: string) {
+    setWorkoutDayName(day);
+    const exs = workoutData?.split?.[day] ?? [];
+    setWorkoutLog({
+      exerciseLogs: Object.fromEntries(exs.map(ex => [ex, [{ weight: '', reps: '' }]])),
+      notes: '',
+    });
+  }
 
   // ── Skill ──────────────────────────────────────────────────────────────────
   const skillMod  = plan.modules.find(m => m.type === 'skill');
@@ -573,10 +631,54 @@ function CommitPageContent() {
     () => Object.fromEntries((stats?.commits.completedHabitIds ?? []).map(id => [id, true]))
   );
 
+  // ── Session persistence ────────────────────────────────────────────────────
+  const storageKey = user?.id ? `commit-${user.id}-${toYmd(new Date())}` : null;
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    if (!storageKey || restored) return;
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      if (!saved) return;
+      const s = JSON.parse(saved) as Partial<{
+        workoutDayName: string;
+        workoutLog: WorkoutLog;
+        skillLog: PracticeLog;
+        studyLog: PracticeLog;
+        nutritionLog: NutritionLog;
+        habitChecked: Record<string, boolean>;
+      }>;
+      if (s.workoutDayName) setWorkoutDayName(s.workoutDayName);
+      if (s.workoutLog)     setWorkoutLog(s.workoutLog);
+      if (s.skillLog)       setSkillLog(s.skillLog);
+      if (s.studyLog)       setStudyLog(s.studyLog);
+      if (s.nutritionLog)   setNutritionLog(s.nutritionLog);
+      if (s.habitChecked)   setHabitChecked(s.habitChecked);
+      setRestored(true);
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    sessionStorage.setItem(storageKey, JSON.stringify({ workoutDayName, workoutLog, skillLog, studyLog, nutritionLog, habitChecked }));
+  }, [storageKey, workoutDayName, workoutLog, skillLog, studyLog, nutritionLog, habitChecked]);
+
+  function handleStartFresh() {
+    if (storageKey) sessionStorage.removeItem(storageKey);
+    window.location.reload();
+  }
+
   // ── Save ───────────────────────────────────────────────────────────────────
   const [saving, setSaving]   = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError]     = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!success) return;
+    const t = setTimeout(() => router.push('/dashboard'), 3000);
+    return () => clearTimeout(t);
+  }, [success, router]);
 
   // Summary shown in the success overlay
   type CommitSummary = {
@@ -699,8 +801,8 @@ function CommitPageContent() {
           ? { adherence: nutritionLog.adherence, context: nutritionLog.context }
           : undefined,
       });
+      if (storageKey) sessionStorage.removeItem(storageKey);
       setSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 3500);
 
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unexpected error');
@@ -718,6 +820,22 @@ function CommitPageContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.surface, color: T.ink }}>
+      <style>{`
+        .ci-toggle-btn { transition: background 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out; }
+        .ci-toggle-btn:not(:disabled):hover { border-color: var(--folio-stone); }
+        .ci-day-btn { transition: background 0.12s ease-out; }
+        .ci-day-btn:not(.ci-day-active):hover { background: var(--folio-tint); }
+        .ci-text-btn { transition: color 0.12s ease-out; }
+        .ci-text-btn:hover { color: var(--folio-ink) !important; }
+        .ci-habit-btn { transition: background 0.15s ease-out; }
+        .ci-habit-btn:hover { background: var(--folio-tint); }
+        .ci-main-btn:not(:disabled):hover { opacity: 0.82; }
+        .ci-dashboard-btn { transition: background 0.15s ease-out; }
+        .ci-dashboard-btn:hover { background: var(--folio-tint); }
+        @media (prefers-reduced-motion: reduce) {
+          .ci-toggle-btn, .ci-day-btn, .ci-text-btn, .ci-habit-btn, .ci-main-btn, .ci-dashboard-btn { transition: none !important; }
+        }
+      `}</style>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
         <AppTopNav />
       </div>
@@ -740,12 +858,32 @@ function CommitPageContent() {
               </span>
             </div>
           )}
+          {restored && !alreadyCommitted && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+              <span style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Resuming earlier session
+              </span>
+              <button type="button" onClick={handleStartFresh}
+                className="ci-text-btn"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.08em', textDecoration: 'underline', textUnderlineOffset: 2, padding: 0 }}>
+                Start fresh ×
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ── Error banner ───────────────────────────────────────────────── */}
         {error && (
-          <div style={{ marginBottom: 16, padding: '12px 16px', borderLeft: `3px solid ${T.negative}`, background: T.tint, fontFamily: T.mono, fontSize: 11, color: T.negative }}>
-            {error}
+          <div style={{ marginBottom: 16, padding: '12px 16px', border: `1px solid ${T.negative}`, background: T.tint, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.negative }}>{error}</span>
+            <button
+              type="button"
+              onClick={handleCommit}
+              disabled={saving}
+              style={{ background: 'none', border: `1px solid ${T.negative}`, padding: '4px 12px', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: T.mono, fontSize: 10, color: T.negative, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -758,9 +896,16 @@ function CommitPageContent() {
             const isRest = todayExercises.length === 0;
             return (
               <SectionShell key={mod.id} index={idx} type="workout" title={mod.title}
-                subtitle={isRest ? 'Rest day' : `${workoutData.focus} · ${today.dayName}`}
+                subtitle={isRest ? `No exercises for ${workoutDayName}` : `${workoutData.focus} · ${workoutDayName}`}
                 done={workoutDone}>
-                <WorkoutSection data={workoutData} dayName={today.dayName} log={workoutLog} onChange={setWorkoutLog} />
+                <WorkoutSection
+                  data={workoutData}
+                  dayName={workoutDayName}
+                  todayName={today.dayName}
+                  log={workoutLog}
+                  onChange={setWorkoutLog}
+                  onDayChange={handleWorkoutDayChange}
+                />
               </SectionShell>
             );
           }
@@ -829,6 +974,7 @@ function CommitPageContent() {
       }}>
         <button
           type="button" onClick={() => router.push('/dashboard')}
+          className="ci-text-btn"
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, color: T.stone, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}
         >
           <X style={{ width: 14, height: 14 }} /> Cancel
@@ -842,13 +988,14 @@ function CommitPageContent() {
           </div>
           <button
             type="button" onClick={handleCommit} disabled={saving || success}
+            className="ci-main-btn"
             style={{
               padding: '12px 32px',
               background: saving || success ? T.tint : T.ink,
               color:      saving || success ? T.stone : T.surface,
               border: 'none', cursor: saving || success ? 'not-allowed' : 'pointer',
               fontFamily: T.mono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
-              transition: 'background 0.15s',
+              transition: 'background 0.15s ease-out, opacity 0.15s ease-out',
             }}
           >
             {saving ? 'Saving…' : alreadyCommitted ? 'Update Commit' : 'Commit Day'}
@@ -913,9 +1060,11 @@ function CommitPageContent() {
               </div>
             </div>
 
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone, marginTop: 24 }}>
-              Returning to dashboard…
-            </div>
+            <button type="button" onClick={() => router.push('/dashboard')}
+              className="ci-dashboard-btn"
+              style={{ marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 24px', border: `1px solid ${T.ink}`, background: 'transparent', cursor: 'pointer', fontFamily: T.mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.ink }}>
+              Go to dashboard →
+            </button>
           </div>
         </div>
       )}
