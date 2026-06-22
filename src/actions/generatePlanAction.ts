@@ -112,7 +112,7 @@ export async function generatePlan(
 
     if (!raw) return { ok: false, error: 'AI returned no content. Try again.' };
 
-    // Strip markdown fences and trim to last closing brace — same logic as handleInitialize
+    // Strip markdown fences and trim to last closing brace
     let cleaned = raw.trim();
     if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '');
     if (cleaned.startsWith('```'))     cleaned = cleaned.replace(/^```\n?/, '');
