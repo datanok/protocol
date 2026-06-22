@@ -13,7 +13,7 @@ import { T } from '@/lib/tokens';
 // ─── Primitives ───────────────────────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone }}>
+    <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.stone }}>
       {children}
     </div>
   );
@@ -55,6 +55,7 @@ function SplitGrid({ split, dayFocus, todayName }: { split: Record<string, strin
               key={day}
               type="button"
               onClick={() => setActive(i)}
+              className={`tr-day-tab${isActive ? ' is-active' : ''}`}
               style={{
                 padding: '10px 0',
                 background: isActive ? T.ink : isToday ? T.tint : 'transparent',
@@ -107,7 +108,7 @@ function SplitGrid({ split, dayFocus, todayName }: { split: Record<string, strin
         </div>
 
         {isRest ? (
-          <div style={{ fontFamily: T.mono, fontSize: 12, color: T.stone, fontStyle: 'italic' }}>Rest day</div>
+          <div style={{ fontFamily: T.serifD, fontSize: 13, color: T.stone, fontStyle: 'italic' }}>Rest day</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {parsed.map(({ name, prescription }, i) => (
@@ -153,7 +154,7 @@ function VolumeChart({ weeks }: { weeks: { label: string; sets: number }[] }) {
           return (
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: CHART_H + 20, gap: 4 }}>
               {w.sets > 0 && (
-                <div style={{ fontFamily: T.mono, fontSize: 8, color: isCurrentWeek ? T.accent : T.stone, lineHeight: 1 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 10, color: isCurrentWeek ? T.accent : T.stone, lineHeight: 1 }}>
                   {w.sets}
                 </div>
               )}
@@ -162,9 +163,8 @@ function VolumeChart({ weeks }: { weeks: { label: string; sets: number }[] }) {
                 height: barH,
                 background: isCurrentWeek ? T.accent : T.ink,
                 opacity: isCurrentWeek ? 1 : 0.25 + (i / weeks.length) * 0.6,
-                transition: 'height 0.3s',
               }} />
-              <div style={{ fontFamily: T.mono, fontSize: 7, color: T.stone, textAlign: 'center', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, textAlign: 'center', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                 {w.label}
               </div>
             </div>
@@ -204,7 +204,7 @@ function ExercisePanel({
     <div>
       {/* PR callout */}
       {entry.pr && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '12px 16px', background: T.tint, border: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.accent}`, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '12px 16px', background: T.tint, border: `1px solid ${T.accent}`, marginBottom: 20 }}>
           <div>
             <Label>Personal Record</Label>
             <div style={{ marginTop: 4, display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -250,9 +250,9 @@ function ExercisePanel({
               {/* Set rows — compact table */}
               <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 1fr', gap: '4px 12px' }}>
                 {/* Headers */}
-                <div style={{ fontFamily: T.mono, fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Set</div>
-                <div style={{ fontFamily: T.mono, fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Weight</div>
-                <div style={{ fontFamily: T.mono, fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Reps</div>
+                <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Set</div>
+                <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Weight</div>
+                <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.stone, textAlign: 'center' }}>Reps</div>
                 {/* Data */}
                 {session.sets.map((set, idx) => {
                   const isPR = entry.pr &&
@@ -306,7 +306,7 @@ create policy "Users manage own workout logs" on workout_logs
   with check (auth.uid() = user_id);`;
 
   return (
-    <div style={{ border: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.accent}`, padding: '20px 24px', marginBottom: 24 }}>
+    <div style={{ border: `1px solid ${T.rule}`, padding: '20px 24px', marginBottom: 24 }}>
       <Label>Setup Required</Label>
       <div style={{ fontFamily: T.serifT, fontSize: 15, color: T.ink, marginTop: 8, marginBottom: 16, lineHeight: 1.6 }}>
         Workout history needs a <em>workout_logs</em> table in Supabase. Run this migration once:
@@ -367,6 +367,10 @@ function TrainingPageContent() {
   return (
     <div style={{ minHeight: '100vh', background: T.surface, color: T.ink }}>
       <style>{`
+        .tr-day-tab { transition: background 0.15s; }
+        .tr-day-tab:not(.is-active):hover { background: var(--folio-tint) !important; }
+        .tr-ex-btn  { transition: background 0.15s, border-color 0.15s, color 0.15s; }
+        .tr-ex-btn:not(.is-on):hover { border-color: var(--folio-rule-dark) !important; color: var(--folio-ink) !important; }
         @media (max-width: 768px) {
           .tr-main      { padding: 56px 16px 64px !important; }
           .tr-header-h1 { font-size: 24px !important; line-height: 1.1 !important; }
@@ -379,7 +383,7 @@ function TrainingPageContent() {
       `}</style>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}><AppTopNav /></div>
 
-      <main className="tr-main" style={{ paddingTop: 56, maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
+      <main className="tr-main" style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 48px 80px' }}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div style={{ paddingTop: 36, paddingBottom: 24, marginBottom: 32, borderBottom: `1px solid ${T.ink}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
@@ -401,7 +405,7 @@ function TrainingPageContent() {
               display: 'inline-flex', alignItems: 'center', gap: 8,
             }}
           >
-            {isRestDay ? 'Log Today' : `Log ${today.dayName} →`}
+            {isRestDay ? 'Log Today →' : `Log ${today.dayName} →`}
           </Link>
         </div>
 
@@ -455,6 +459,8 @@ function TrainingPageContent() {
                       key={ex}
                       type="button"
                       onClick={() => setSelectedExercise(ex)}
+                      aria-pressed={activeExercise === ex}
+                      className={`tr-ex-btn${activeExercise === ex ? ' is-on' : ''}`}
                       style={{
                         padding: '5px 12px',
                         border: `1px solid ${activeExercise === ex ? T.ink : T.rule}`,
@@ -462,7 +468,6 @@ function TrainingPageContent() {
                         color: activeExercise === ex ? T.surface : T.stone,
                         fontFamily: T.mono, fontSize: 9, letterSpacing: '0.08em',
                         textTransform: 'uppercase', cursor: 'pointer',
-                        transition: 'all 0.1s',
                       }}
                     >
                       {ex}
@@ -507,7 +512,9 @@ function TrainingPageContent() {
               <Label>Volume · 8 Weeks</Label>
               <Hr />
               <div style={{ marginTop: 16 }}>
-                {!needsMigration && history && history.weeklyVolume.some(w => w.sets > 0) ? (
+                {isLoading ? (
+                  <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, padding: '16px 0' }}>Loading…</div>
+                ) : !needsMigration && history && history.weeklyVolume.some(w => w.sets > 0) ? (
                   <VolumeChart weeks={history.weeklyVolume} />
                 ) : (
                   <div style={{ fontFamily: T.mono, fontSize: 10, color: T.stone, padding: '16px 0' }}>
@@ -522,7 +529,7 @@ function TrainingPageContent() {
               <div>
                 <Label>PRs</Label>
                 <Hr />
-                <div style={{ marginTop: 0 }}>
+                <div>
                   {Object.values(history.byExercise)
                     .filter(e => e.pr)
                     .sort((a, b) => (b.pr?.weight_kg ?? 0) - (a.pr?.weight_kg ?? 0))
