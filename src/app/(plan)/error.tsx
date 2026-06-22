@@ -43,7 +43,7 @@ export default function PlanError({
           lineHeight: 1.6,
           marginBottom: 24,
           padding: '10px 14px',
-          borderLeft: '3px solid var(--folio-negative)',
+          border: '1px solid var(--folio-negative)',
           background: 'var(--folio-tint)',
         }}>
           {error.message}

@@ -157,20 +157,6 @@
     border-color: var(--folio-ink) !important;
   }
 
-  .folio-streak {
-    font-family: var(--font-serif-display);
-    font-size: 72px;
-    line-height: 1;
-    color: var(--folio-accent);
-  }
-
-  /* Compatibility shims for existing components that use dark tokens */
-  .glass-panel {
-    background: rgba(247, 244, 239, 0.92);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--folio-rule);
-  }
-
   .shadow-card {
     box-shadow: 0 0 0 1px var(--folio-rule), 0 4px 12px rgba(28, 23, 20, 0.06);
   }

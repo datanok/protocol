@@ -53,12 +53,12 @@ function DebriefContent() {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from('daily_commits')
-        .select('committed_date')
+        .select('date')
         .eq('user_id', user.id)
-        .gte('committed_date', startYmd)
-        .lte('committed_date', endYmd);
+        .gte('date', startYmd)
+        .lte('date', endYmd);
       if (error) throw error;
-      return (data ?? []).map((r: { committed_date: string }) => r.committed_date);
+      return (data ?? []).map((r: { date: string }) => r.date);
     },
     enabled: !!user?.id,
   });

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
+import { T } from '@/lib/tokens';
 
 import type { SkillBenchmark } from '@/types/schema';
 import { supabase } from '@/lib/supabase';
@@ -122,7 +123,7 @@ export default function LogSkillSessionModal({
 
         <div className="p-6 space-y-5">
           {error && (
-            <div className="bg-error/10 border-l-4 border-error text-error font-mono text-[11px] p-3">
+            <div style={{ marginBottom: 4, padding: '10px 14px', border: `1px solid ${T.negative}`, fontFamily: T.mono, fontSize: 11, color: T.negative }}>
               {error}
             </div>
           )}

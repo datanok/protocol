@@ -484,6 +484,7 @@ export default function AppTopNav() {
       label: "Dashboard",
       active: pathname === "/dashboard",
     },
+    { href: "/commit", label: "Commit", active: pathname === "/commit" },
     { href: "/plan", label: "Plan", active: pathname.startsWith("/plan") },
     {
       href: skillHref,

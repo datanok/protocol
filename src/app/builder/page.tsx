@@ -541,7 +541,7 @@ function ManualBuilder({ user }: { user: { id: string } }) {
 
       {/* ── Error + Save ───────────────────────────────────────────────────── */}
       {error && (
-        <div style={{ marginBottom: 12, padding: '10px 14px', borderLeft: `3px solid ${T.negative}`, background: T.tint, fontFamily: T.mono, fontSize: 10, color: T.negative }}>
+        <div style={{ marginBottom: 12, padding: '10px 14px', border: `1px solid ${T.negative}`, background: T.tint, fontFamily: T.mono, fontSize: 10, color: T.negative }}>
           {error}
         </div>
       )}
@@ -632,7 +632,7 @@ function AIPanels({ user }: { user: { id: string } }) {
           <div style={{ fontFamily: T.serifT, fontSize: 18, fontStyle: 'italic', color: T.ink }}>Paste &amp; Initialize</div>
         </div>
         {error && (
-          <div style={{ margin: 0, padding: '12px 20px', borderBottom: `1px solid ${T.rule}`, borderLeft: `3px solid ${T.negative}`, flexShrink: 0 }}>
+          <div style={{ margin: 0, padding: '12px 20px', borderBottom: `1px solid ${T.negative}`, borderTop: `1px solid ${T.negative}`, flexShrink: 0 }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, color: T.negative, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>Ingestion Failed</div>
             <div style={{ fontFamily: T.mono, fontSize: 11, color: T.stone }}>{error}</div>
           </div>

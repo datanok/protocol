@@ -97,7 +97,7 @@ function AppMockup() {
   return (
     <div style={{ border: `1px solid ${T.rule}`, background: T.tint, fontFamily: T.mono }}>
       <div style={{ padding: '8px 14px', borderBottom: `1px solid ${T.rule}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: T.surface }}>
-        <span style={{ fontSize: 10, color: T.accent, letterSpacing: '0.12em' }}>FOLIO</span>
+        <span style={{ fontSize: 10, color: T.accent, letterSpacing: '0.12em' }}>PROTOCOL</span>
         <span style={{ fontSize: 8, color: T.stone, letterSpacing: '0.1em' }}>DASHBOARD</span>
       </div>
 
@@ -161,11 +161,29 @@ export default function LandingPage() {
         .lp-tpls   { display: grid; grid-template-columns: repeat(3, 1fr); }
         .lp-philosophy { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
 
+        /* Ticker */
+        .lp-ticker-inner { display: flex; white-space: nowrap; padding: 10px 0; animation: marquee 40s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .lp-ticker-inner { animation: none; } }
+
+        /* Hover states */
+        .lp-btn-primary  { transition: opacity 0.15s; }
+        .lp-btn-primary:hover  { opacity: 0.82; }
+        .lp-btn-outline  { transition: border-color 0.15s, color 0.15s; }
+        .lp-btn-outline:hover  { border-color: var(--folio-ink) !important; color: var(--folio-ink) !important; }
+        .lp-btn-accent   { transition: opacity 0.15s; }
+        .lp-btn-accent:hover   { opacity: 0.85; }
+        .lp-tpl-card     { transition: background 0.15s; }
+        .lp-tpl-card:hover     { background: var(--folio-tint) !important; }
+        .lp-footer-link  { transition: color 0.15s; }
+        .lp-footer-link:hover  { color: var(--folio-ink) !important; }
+        .lp-all-tpls     { transition: color 0.15s; }
+        .lp-all-tpls:hover     { color: var(--folio-ink) !important; }
+
         @media (max-width: 900px) {
           .lp-pad        { padding: 0 20px; }
           .lp-hero       { grid-template-columns: 1fr; gap: 40px; }
           .lp-how        { grid-template-columns: 1fr; }
-          .lp-how > div  { border-top: 2px solid var(--folio-ink); border-left: none !important; }
+          .lp-how > div  { border-top: 2px solid var(--folio-accent) !important; border-left: none !important; }
           .lp-mods       { grid-template-columns: repeat(2, 1fr); }
           .lp-mods > div { border-right: 1px solid var(--folio-rule) !important; }
           .lp-mods > div:nth-child(2n) { border-right: none !important; }
@@ -190,7 +208,7 @@ export default function LandingPage() {
           <div className="lp-hero">
             <div>
               <SectionLabel>STRUCTURED PERSONAL PROTOCOL</SectionLabel>
-              <h1 style={{ fontFamily: T.serifD, fontSize: 'clamp(52px, 7.5vw, 88px)', lineHeight: 0.97, letterSpacing: '-2px', margin: '0 0 28px' }}>
+              <h1 style={{ fontFamily: T.serifD, fontSize: 'clamp(52px, 7.5vw, 88px)', lineHeight: 0.97, letterSpacing: '-0.025em', margin: '0 0 28px', textWrap: 'balance' } as React.CSSProperties}>
                 The plan<br />
                 <em style={{ color: T.accent }}>you actually</em><br />
                 follow.
@@ -199,10 +217,10 @@ export default function LandingPage() {
                 Protocol is a personal operating system — structure your training, skills, nutrition, and daily habits into one protocol built around your real life.
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <Link href="/builder" style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', padding: '13px 32px', background: T.ink, color: T.surface, display: 'inline-block' }}>
+                <Link href="/builder" className="lp-btn-primary" style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', padding: '13px 32px', background: T.ink, color: T.surface, display: 'inline-block' }}>
                   Start Building →
                 </Link>
-                <Link href="/templates" style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', padding: '13px 32px', border: `1px solid ${T.rule}`, color: T.ink, display: 'inline-block' }}>
+                <Link href="/templates" className="lp-btn-outline" style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', padding: '13px 32px', border: `1px solid ${T.rule}`, color: T.ink, display: 'inline-block' }}>
                   Browse Templates
                 </Link>
               </div>
@@ -222,11 +240,11 @@ export default function LandingPage() {
       </section>
 
       {/* TICKER */}
-      <div style={{ borderBottom: `1px solid ${T.rule}`, background: T.tint, overflow: 'hidden' }}>
-        <div style={{ padding: '10px 0', display: 'flex', whiteSpace: 'nowrap' }}>
-          {[...Array(3)].flatMap((_, r) =>
+      <div style={{ borderBottom: `1px solid ${T.rule}`, background: T.tint, overflow: 'hidden' }} className="mask-edges">
+        <div className="lp-ticker-inner">
+          {[...Array(2)].flatMap((_, r) =>
             TICKER.map((t, i) => (
-              <span key={`${r}-${i}`} style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', color: T.stone, padding: '0 20px' }}>
+              <span key={`${r}-${i}`} style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', color: T.stone, padding: '0 20px', flexShrink: 0 }}>
                 {t}<span style={{ color: T.rule, marginLeft: 16 }}>·</span>
               </span>
             ))
@@ -298,14 +316,14 @@ export default function LandingPage() {
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: T.serifT, fontSize: 17, fontStyle: 'italic', color: '#A09890', lineHeight: 1.7, margin: '0 0 28px' }}>
-                Willpower is finite. Habits compound. Protocol gives you the structure to turn ambitious goals into daily rituals — logged, tracked, and refined week over week.
+              <p style={{ fontFamily: T.serifT, fontSize: 17, fontStyle: 'italic', color: T.stone, lineHeight: 1.7, margin: '0 0 28px' }}>
+                Willpower is finite. Habits compound. Protocol gives you the structure to turn ambitious goals into daily rituals, logged, tracked, and refined week over week.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {['Plan built around your actual schedule', 'Log in under 2 minutes, every day', 'Weekly debrief shows you what to adjust'].map((t, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ width: 5, height: 5, background: T.accent, marginTop: 6, flexShrink: 0 }} />
-                    <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.08em', color: '#8C8279', lineHeight: 1.5 }}>{t.toUpperCase()}</span>
+                    <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.08em', color: T.stone, lineHeight: 1.5 }}>{t}</span>
                   </div>
                 ))}
               </div>
@@ -320,18 +338,18 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 48 }}>
             <span style={{ fontFamily: T.serifT, fontSize: 28, fontStyle: 'italic' }}>Community templates.</span>
             <div style={{ flex: 1, borderBottom: `1px solid ${T.rule}` }} />
-            <Link href="/templates" style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, textDecoration: 'none', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>ALL TEMPLATES →</Link>
+            <Link href="/templates" className="lp-all-tpls" style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, textDecoration: 'none', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>ALL TEMPLATES →</Link>
           </div>
           <div className="lp-tpls" style={{ border: `1px solid ${T.rule}` }}>
             {TEMPLATES.map((t, i) => (
-              <Link key={i} href="/templates" style={{ display: 'block', textDecoration: 'none', color: 'inherit', padding: '28px 24px', borderRight: i < 2 ? `1px solid ${T.rule}` : 'none', position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: t.color }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 10, marginBottom: 12 }}>
+              <Link key={i} href="/templates" className="lp-tpl-card" style={{ display: 'block', textDecoration: 'none', color: 'inherit', padding: '28px 24px', borderRight: i < 2 ? `1px solid ${T.rule}` : 'none', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: t.color }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                   <div style={{ width: 5, height: 5, background: t.color }} />
                   <span style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, letterSpacing: '0.1em' }}>{t.type}</span>
                 </div>
-                <div style={{ fontFamily: T.serifT, fontSize: 17, fontStyle: 'italic', color: T.ink, paddingLeft: 10, marginBottom: 16, lineHeight: 1.3 }}>{t.title}</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 10 }}>
+                <div style={{ fontFamily: T.serifT, fontSize: 17, fontStyle: 'italic', color: T.ink, marginBottom: 16, lineHeight: 1.3 }}>{t.title}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {t.tags.map(tag => (
                       <span key={tag} style={{ fontFamily: T.mono, fontSize: 8, color: T.stone, border: `1px solid ${T.rule}`, padding: '2px 7px', letterSpacing: '0.06em' }}>{tag}</span>
@@ -348,18 +366,17 @@ export default function LandingPage() {
       {/* FINAL CTA */}
       <section style={{ padding: '96px 0', borderBottom: `1px solid ${T.rule}` }}>
         <div className="lp-pad" style={{ textAlign: 'center' }}>
-          <SectionLabel>BEGIN</SectionLabel>
-          <h2 style={{ fontFamily: T.serifD, fontSize: 'clamp(40px, 6vw, 72px)', lineHeight: 1.02, letterSpacing: '-1.5px', margin: '16px 0 24px' }}>
+          <h2 style={{ fontFamily: T.serifD, fontSize: 'clamp(40px, 6vw, 72px)', lineHeight: 1.02, letterSpacing: '-0.02em', margin: '0 0 24px', textWrap: 'balance' } as React.CSSProperties}>
             Start your protocol<br /><em style={{ color: T.accent }}>today.</em>
           </h2>
           <p style={{ fontFamily: T.serifT, fontSize: 16, fontStyle: 'italic', color: T.stone, maxWidth: 400, margin: '0 auto 44px', lineHeight: 1.6 }}>
             Free. No subscription. Build your plan in five minutes, commit daily, see results in eight weeks.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/builder" style={{ fontFamily: T.mono, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', padding: '15px 40px', background: T.accent, color: T.surface, display: 'inline-block' }}>
+            <Link href="/builder" className="lp-btn-accent" style={{ fontFamily: T.mono, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', padding: '15px 40px', background: T.accent, color: T.surface, display: 'inline-block' }}>
               Build Your Plan →
             </Link>
-            <Link href="/login" style={{ fontFamily: T.mono, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', padding: '15px 40px', border: `1px solid ${T.rule}`, color: T.ink, display: 'inline-block' }}>
+            <Link href="/login" className="lp-btn-outline" style={{ fontFamily: T.mono, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', padding: '15px 40px', border: `1px solid ${T.rule}`, color: T.ink, display: 'inline-block' }}>
               Sign In
             </Link>
           </div>
@@ -370,13 +387,13 @@ export default function LandingPage() {
       <footer style={{ padding: '32px 0' }}>
         <div className="lp-pad">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 13, letterSpacing: '0.1em', color: T.accent }}>FOLIO</div>
+            <div style={{ fontFamily: T.mono, fontSize: 13, letterSpacing: '0.1em', color: T.accent }}>PROTOCOL</div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'center' }}>
               {[{ href: '/templates', label: 'Templates' }, { href: '/builder', label: 'Builder' }, { href: '/login', label: 'Sign In' }].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, textDecoration: 'none', letterSpacing: '0.1em' }}>{label.toUpperCase()}</Link>
+                <Link key={href} href={href} className="lp-footer-link" style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, textDecoration: 'none', letterSpacing: '0.1em' }}>{label.toUpperCase()}</Link>
               ))}
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, letterSpacing: '0.08em' }}>© {new Date().getFullYear()} FOLIO</div>
+            <div style={{ fontFamily: T.mono, fontSize: 9, color: T.stone, letterSpacing: '0.08em' }}>© {new Date().getFullYear()} PROTOCOL</div>
           </div>
         </div>
       </footer>
