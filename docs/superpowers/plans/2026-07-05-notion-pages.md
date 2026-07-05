@@ -216,7 +216,7 @@ git commit -m "feat: add Block and Page types"
   - `updatePage(pageId: string, userId: string, blocks: Block[]): Promise<void>`
   - `deletePage(pageId: string, userId: string): Promise<void>`
   - `reorderPages(userId: string, orderedIds: string[]): Promise<void>`
-  - `logTrackerEntry(pageId: string, userId: string, blockId: string, value: number): Promise<void>`
+  - `logTrackerEntry(pageId: string, userId: string, blockId: string, value: number, date: string): Promise<void>` — `date` is a client-computed `YYYY-MM-DD` local-date string (matching the `toYmd()` pattern already used by `upsertDailyCommit` elsewhere in this codebase); the server never derives "today" itself, avoiding UTC/local-timezone misfiling near midnight.
   - `createPagesFromAI(userId: string, pages: Array<{ title: string; icon?: string; blocks?: Array<Omit<Block, 'id'>> }>): Promise<void>`
   - `usePages(userId: string)` — React Query hook, queryKey `['pages', userId]`
   - `useInvalidatePages()` — returns `(userId: string) => void`
@@ -378,6 +378,7 @@ export async function logTrackerEntry(
   userId: string,
   blockId: string,
   value: number,
+  date: string,
 ): Promise<void> {
   const { data, error } = await supabase
     .from("pages")
@@ -390,9 +391,8 @@ export async function logTrackerEntry(
 
   const blocks = ((data!.blocks as Block[]) ?? []).map((block) => {
     if (block.id !== blockId || block.type !== "tracker") return block;
-    const today = new Date().toISOString().slice(0, 10);
-    const entries = block.entries.filter((e) => e.date !== today);
-    entries.push({ date: today, value });
+    const entries = block.entries.filter((e) => e.date !== date);
+    entries.push({ date, value });
     return { ...block, entries };
   });
 
@@ -1882,7 +1882,7 @@ git commit -m "feat: add table and tracker blocks to page editor"
 
 **Interfaces:**
 
-- Consumes: `usePages` (Task 3); `logTrackerEntry` (Task 3); `TrackerBlockData` from `@/types/schema` (Task 2); `useAuth()` → `{ user }` (already imported in this file); `T` (already imported).
+- Consumes: `usePages` (Task 3); `logTrackerEntry` (Task 3, now takes a client-computed `date: string` as its 5th argument — see Task 3); `TrackerBlockData` from `@/types/schema` (Task 2); `useAuth()` → `{ user }` (already imported in this file); `T` (already imported); `toYmd(d: Date): string` — already defined at the top of `src/app/(plan)/dashboard/page.tsx` (used elsewhere in this file for the consistency grid) — reuse it, do not reimplement or reimport it.
 - Produces: a `TrackersSection` component rendered in the dashboard's body, after `HabitsSection`. No other file depends on this — it's a leaf UI addition.
 
 - [ ] **Step 1: Add imports**
@@ -1924,7 +1924,7 @@ function TrackerRow({
     if (Number.isNaN(num) || saving) return;
     setSaving(true);
     try {
-      await logTrackerEntry(pageId, userId, block.id, num);
+      await logTrackerEntry(pageId, userId, block.id, num, toYmd(new Date()));
       setValue("");
       onLogged();
     } finally {
