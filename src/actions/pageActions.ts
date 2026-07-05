@@ -150,6 +150,7 @@ export async function logTrackerEntry(
   userId: string,
   blockId: string,
   value: number,
+  date: string,
 ): Promise<void> {
   const { data, error } = await supabase
     .from("pages")
@@ -162,9 +163,8 @@ export async function logTrackerEntry(
 
   const blocks = ((data!.blocks as Block[]) ?? []).map((block) => {
     if (block.id !== blockId || block.type !== "tracker") return block;
-    const today = new Date().toISOString().slice(0, 10);
-    const entries = block.entries.filter((e) => e.date !== today);
-    entries.push({ date: today, value });
+    const entries = block.entries.filter((e) => e.date !== date);
+    entries.push({ date, value });
     return { ...block, entries };
   });
 
