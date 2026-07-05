@@ -497,6 +497,11 @@ export default function AppTopNav() {
       active: pathname.startsWith("/reports"),
     },
     {
+      href: "/pages",
+      label: "Pages",
+      active: pathname.startsWith("/pages"),
+    },
+    {
       href: "/builder",
       label: "Builder",
       active: pathname.startsWith("/builder"),
