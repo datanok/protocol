@@ -44,3 +44,5 @@ next-env.d.ts
 *.agents
 *.claude
 *.impeccable
+# subagent-driven-development scratch
+.superpowers/
