@@ -1449,9 +1449,13 @@ export default function LandingPage() {
                 fontSize: 9,
                 color: T.stone,
                 letterSpacing: "0.08em",
+                textAlign: "right",
               }}
             >
               © {new Date().getFullYear()} PROTOCOL
+              <div style={{ marginTop: 4 }}>
+                MADE WITH <span style={{ color: T.accent }}>♥</span> BY TANMAY
+              </div>
             </div>
           </div>
         </div>
