@@ -1,6 +1,7 @@
-'use server';
+"use server";
 
-import { createPlan } from './planActions';
+import { createPlan } from "./planActions";
+import { createPagesFromAI } from "./pageActions";
 
 const SCHEMA_PROMPT = `You are generating a structured protocol configuration for a web application called "Protocol".
 
@@ -9,7 +10,7 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
 ---
 ## ⚠️ CRITICAL RULES
 * Output ONLY valid JSON. No markdown, no code blocks, no extra text.
-* All fields must be present. Do NOT omit any keys.
+* All fields must be present except "pages", which is optional — omit it entirely if not needed. Do NOT omit any other keys.
 * Use consistent kebab-case IDs (e.g. "barre-chords", "squat-form", "chapter-1").
 * Keep values realistic, specific, and actionable.
 * module "order" values start at 1 and increment by 1. Never use 0.
@@ -18,6 +19,7 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
 * "focus" must be 1–2 sentences max. No bullet points, no multi-paragraph text.
 * If the plan includes a skill module (guitar, coding, language, etc.), do NOT add that skill as an exercise or activity inside the workout split. The skill module and any related habit handle it — duplicating it in the split creates conflicts.
 * Habits track DAILY behaviours. Do not add a habit for something already fully tracked by a module (e.g. no "practice guitar" habit if there is a skill module for guitar — unless the user explicitly wants a daily checkbox separate from session logging).
+* If the user describes something they want to track freeform (a running log of practice time, pages read, money saved — with no structured curriculum), add a "pages" entry for it instead of a skill/study module. If they describe wanting a structured curriculum or progression (lessons, techniques, milestones to unlock), use a skill or study module as already documented. Do not create both a page and a module for the same thing.
 
 ---
 ## 📦 REQUIRED JSON SCHEMA
@@ -77,6 +79,20 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
         ]
       }
     }
+  ],
+  "pages": [
+    {
+      "title": "Guitar Practice",
+      "icon": "🎸",
+      "blocks": [
+        {
+          "type": "tracker",
+          "label": "Practice time",
+          "unit": "minutes",
+          "entries": []
+        }
+      ]
+    }
   ]
 }`;
 
@@ -86,52 +102,70 @@ export async function generatePlan(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return { ok: false, error: 'AI generation is not configured.' };
+    if (!apiKey)
+      return { ok: false, error: "AI generation is not configured." };
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SCHEMA_PROMPT }] },
-          contents: [{ role: 'user', parts: [{ text: userInput }] }],
+          contents: [{ role: "user", parts: [{ text: userInput }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
         }),
       },
     );
 
     if (!response.ok) {
-      return { ok: false, error: 'AI generation failed. Check your API key or try again.' };
+      return {
+        ok: false,
+        error: "AI generation failed. Check your API key or try again.",
+      };
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
     const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!raw) return { ok: false, error: 'AI returned no content. Try again.' };
+    if (!raw) return { ok: false, error: "AI returned no content. Try again." };
 
     // Strip markdown fences and trim to last closing brace
     let cleaned = raw.trim();
-    if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '');
-    if (cleaned.startsWith('```'))     cleaned = cleaned.replace(/^```\n?/, '');
-    if (cleaned.endsWith('```'))       cleaned = cleaned.replace(/```$/, '');
-    cleaned = cleaned.replace(/\s*[\\\s]+$/, '').trim();
-    const lastBrace = cleaned.lastIndexOf('}');
+    if (cleaned.startsWith("```json"))
+      cleaned = cleaned.replace(/^```json\n?/, "");
+    if (cleaned.startsWith("```")) cleaned = cleaned.replace(/^```\n?/, "");
+    if (cleaned.endsWith("```")) cleaned = cleaned.replace(/```$/, "");
+    cleaned = cleaned.replace(/\s*[\\\s]+$/, "").trim();
+    const lastBrace = cleaned.lastIndexOf("}");
     if (lastBrace !== -1) cleaned = cleaned.slice(0, lastBrace + 1);
 
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      return { ok: false, error: 'Could not parse the generated plan. Try rephrasing your goals.' };
+      return {
+        ok: false,
+        error: "Could not parse the generated plan. Try rephrasing your goals.",
+      };
     }
 
     await createPlan(userId, parsed);
+
+    if (Array.isArray(parsed.pages) && parsed.pages.length > 0) {
+      await createPagesFromAI(
+        userId,
+        parsed.pages as Parameters<typeof createPagesFromAI>[1],
+      ).catch(() => {
+        // Best-effort — a pages-creation failure should not fail plan generation.
+      });
+    }
+
     return { ok: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unexpected error';
+    const message = err instanceof Error ? err.message : "Unexpected error";
     return { ok: false, error: message };
   }
 }
