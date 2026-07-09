@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import type { ChecklistBlock } from "@/types/schema";
 import { T } from "@/lib/tokens";
+import { Check, BlockShell } from "./blockUi";
 
 export default function ChecklistBlockView({
   block,
@@ -15,6 +16,8 @@ export default function ChecklistBlockView({
   onDelete: () => void;
 }) {
   const [draft, setDraft] = useState("");
+  const done = block.items.filter((i) => i.done).length;
+  const total = block.items.length;
 
   function addItem() {
     const label = draft.trim();
@@ -40,115 +43,112 @@ export default function ChecklistBlockView({
   }
 
   return (
-    <div
-      style={{ border: `1px solid ${T.rule}`, padding: 16, marginBottom: 12 }}
+    <BlockShell
+      label="Checklist"
+      meta={total > 0 ? `${done} / ${total}` : undefined}
+      onDelete={onDelete}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: T.mono,
-            fontSize: 9,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: T.stone,
-          }}
+      {total > 0 && (
+        <div
+          role="progressbar"
+          aria-valuenow={done}
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-label="Checklist progress"
+          style={{ height: 2, background: T.rule, marginBottom: 14 }}
         >
-          Checklist
-        </span>
-        <button
-          onClick={onDelete}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: T.stone,
-          }}
-        >
-          <Trash2 style={{ width: 12, height: 12 }} />
-        </button>
-      </div>
+          <div
+            style={{
+              height: "100%",
+              background: T.ink,
+              transform: `scaleX(${done / total})`,
+              transformOrigin: "left",
+              transition: "transform 0.2s ease-out",
+            }}
+          />
+        </div>
+      )}
 
       {block.items.map((item) => (
         <div
           key={item.id}
+          className="pg-hoverable"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            padding: "6px 0",
+            gap: 12,
+            padding: "7px 0",
           }}
         >
-          <input
-            type="checkbox"
+          <Check
             checked={item.done}
-            onChange={() => toggleItem(item.id)}
-            style={{ width: 14, height: 14, flexShrink: 0 }}
+            onToggle={() => toggleItem(item.id)}
+            label={item.label}
           />
           <span
+            onClick={() => toggleItem(item.id)}
             style={{
               flex: 1,
               fontFamily: T.sans,
-              fontSize: 13,
+              fontSize: 13.5,
+              lineHeight: 1.45,
               color: item.done ? T.stone : T.ink,
               textDecoration: item.done ? "line-through" : "none",
+              textDecorationColor: T.stone,
+              cursor: "pointer",
+              userSelect: "none",
             }}
           >
             {item.label}
           </span>
-          <button
-            onClick={() => removeItem(item.id)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: T.stone,
-            }}
-          >
-            <X style={{ width: 12, height: 12 }} />
-          </button>
+          <span className="pg-reveal">
+            <button
+              type="button"
+              onClick={() => removeItem(item.id)}
+              aria-label={`Remove ${item.label}`}
+              className="pg-iconbtn pg-iconbtn-danger"
+            >
+              <X style={{ width: 13, height: 13 }} />
+            </button>
+          </span>
         </div>
       ))}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginTop: total > 0 ? 10 : 0,
+        }}
+      >
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") addItem();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addItem();
+            }
           }}
           placeholder="Add item…"
+          aria-label="New checklist item"
+          className="pg-input"
           style={{
             flex: 1,
-            background: T.tint,
-            border: `1px solid ${T.rule}`,
-            outline: "none",
-            padding: "6px 10px",
+            padding: "7px 10px",
             fontFamily: T.sans,
-            fontSize: 12,
-            color: T.ink,
-            boxSizing: "border-box",
+            fontSize: 12.5,
           }}
         />
         <button
+          type="button"
           onClick={addItem}
-          style={{
-            background: "none",
-            border: `1px solid ${T.rule}`,
-            cursor: "pointer",
-            color: T.stone,
-            padding: "0 10px",
-          }}
+          aria-label="Add item"
+          className="pg-ghostbtn"
         >
-          <Plus style={{ width: 12, height: 12 }} />
+          <Plus style={{ width: 11, height: 11 }} />
         </button>
       </div>
-    </div>
+    </BlockShell>
   );
 }

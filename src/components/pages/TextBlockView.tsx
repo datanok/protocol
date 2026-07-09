@@ -1,8 +1,8 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import type { TextBlock } from "@/types/schema";
 import { T } from "@/lib/tokens";
+import { BlockShell } from "./blockUi";
 
 export default function TextBlockView({
   block,
@@ -14,63 +14,26 @@ export default function TextBlockView({
   onDelete: () => void;
 }) {
   return (
-    <div
-      style={{
-        border: `1px solid ${T.rule}`,
-        padding: 16,
-        marginBottom: 12,
-        position: "relative",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: T.mono,
-            fontSize: 9,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: T.stone,
-          }}
-        >
-          Text
-        </span>
-        <button
-          onClick={onDelete}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: T.stone,
-          }}
-        >
-          <Trash2 style={{ width: 12, height: 12 }} />
-        </button>
-      </div>
+    <BlockShell label="Text" onDelete={onDelete}>
       <textarea
         defaultValue={block.content}
         onBlur={(e) => onChange({ ...block, content: e.target.value })}
         placeholder="Write something…"
+        aria-label="Text block content"
         rows={4}
+        className="pg-input"
         style={{
           width: "100%",
-          background: T.tint,
-          border: `1px solid ${T.rule}`,
-          outline: "none",
+          background: T.surface,
           padding: "10px 12px",
           fontFamily: T.sans,
-          fontSize: 13,
-          color: T.ink,
+          fontSize: 13.5,
+          lineHeight: 1.6,
           resize: "vertical",
-          boxSizing: "border-box",
+          maxWidth: "72ch",
+          display: "block",
         }}
       />
-    </div>
+    </BlockShell>
   );
 }

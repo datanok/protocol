@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,12 +16,16 @@ import TrackerBlockView from "@/components/pages/TrackerBlockView";
 import { T } from "@/lib/tokens";
 import type { Block } from "@/types/schema";
 
-const BLOCK_LABELS: Record<Block["type"], string> = {
-  text: "Text",
-  checklist: "Checklist",
-  table: "Table",
-  tracker: "Tracker",
-};
+const BLOCK_TYPES: Array<{
+  type: Block["type"];
+  label: string;
+  hint: string;
+}> = [
+  { type: "text", label: "Text", hint: "Freeform notes" },
+  { type: "checklist", label: "Checklist", hint: "Items with checkboxes" },
+  { type: "table", label: "Table", hint: "Sortable rows and columns" },
+  { type: "tracker", label: "Tracker", hint: "A number logged over time" },
+];
 
 function newBlock(type: Block["type"]): Block {
   const id = crypto.randomUUID();
@@ -34,6 +39,27 @@ function newBlock(type: Block["type"]): Block {
     case "tracker":
       return { id, type, label: "Tracker", unit: "", entries: [] };
   }
+}
+
+function EditorSkeleton() {
+  return (
+    <div aria-hidden>
+      <div
+        style={{ height: 40, background: T.tint, width: "55%", opacity: 0.9 }}
+      />
+      <div
+        style={{
+          height: 120,
+          background: T.tint,
+          marginTop: 32,
+          opacity: 0.6,
+        }}
+      />
+      <div
+        style={{ height: 80, background: T.tint, marginTop: 14, opacity: 0.4 }}
+      />
+    </div>
+  );
 }
 
 export default function PageEditorView() {
@@ -51,14 +77,35 @@ export default function PageEditorView() {
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loadedPageId, setLoadedPageId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Sync local editing state once per page id, during render — an effect here
+  // would also re-fire on every post-save refetch and clobber in-flight edits.
+  if (page && page.id !== loadedPageId) {
+    setLoadedPageId(page.id);
+    setBlocks(page.blocks);
+    setTitle(page.title);
+    setIcon(page.icon ?? "");
+  }
 
   useEffect(() => {
-    if (page) {
-      setBlocks(page.blocks);
-      setTitle(page.title);
-      setIcon(page.icon ?? "");
+    if (!menuOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
     }
-  }, [page]);
+    function onClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, [menuOpen]);
 
   async function persist(next: Block[]) {
     if (!user || !session || !page) return;
@@ -97,51 +144,7 @@ export default function PageEditorView() {
     persist(blocks.filter((b) => b.id !== blockId));
   }
 
-  if (!isLoading && !page) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: T.surface,
-          color: T.ink,
-          fontFamily: T.sans,
-        }}
-      >
-        <div
-          style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}
-        >
-          <AppTopNav />
-        </div>
-        <main style={{ paddingTop: 120, textAlign: "center" }}>
-          <p
-            style={{
-              fontFamily: T.serifD,
-              fontSize: 18,
-              fontStyle: "italic",
-              color: T.stone,
-            }}
-          >
-            Page not found.
-          </p>
-          <button
-            onClick={() => router.push("/pages")}
-            style={{
-              background: "none",
-              border: "none",
-              color: T.accent,
-              cursor: "pointer",
-              fontFamily: T.mono,
-              fontSize: 11,
-            }}
-          >
-            ← Back to Pages
-          </button>
-        </main>
-      </div>
-    );
-  }
-
-  return (
+  const shell = (children: React.ReactNode) => (
     <div
       style={{
         minHeight: "100vh",
@@ -153,160 +156,245 @@ export default function PageEditorView() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
         <AppTopNav />
       </div>
-
       <main
         style={{
-          paddingTop: 56,
           maxWidth: 720,
           margin: "0 auto",
-          padding: "96px 24px 64px",
+          padding: "104px 24px 64px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 32,
-          }}
-        >
-          <input
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-            onBlur={persistTitle}
-            maxLength={4}
-            style={{
-              width: 48,
-              background: T.tint,
-              border: `1px solid ${T.rule}`,
-              outline: "none",
-              padding: "8px 10px",
-              fontFamily: T.mono,
-              fontSize: 18,
-              color: T.ink,
-              textAlign: "center",
-              boxSizing: "border-box",
-            }}
-          />
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={persistTitle}
-            style={{
-              flex: 1,
-              background: "none",
-              border: "none",
-              outline: "none",
-              fontFamily: T.serifD,
-              fontSize: 28,
-              color: T.ink,
-              padding: "4px 0",
-            }}
-          />
-        </div>
-
-        {blocks.map((block) => {
-          switch (block.type) {
-            case "text":
-              return (
-                <TextBlockView
-                  key={block.id}
-                  block={block}
-                  onChange={(n) => updateBlock(block.id, n)}
-                  onDelete={() => deleteBlock(block.id)}
-                />
-              );
-            case "checklist":
-              return (
-                <ChecklistBlockView
-                  key={block.id}
-                  block={block}
-                  onChange={(n) => updateBlock(block.id, n)}
-                  onDelete={() => deleteBlock(block.id)}
-                />
-              );
-            case "table":
-              return (
-                <TableBlockView
-                  key={block.id}
-                  block={block}
-                  onChange={(n) => updateBlock(block.id, n)}
-                  onDelete={() => deleteBlock(block.id)}
-                />
-              );
-            case "tracker":
-              return (
-                <TrackerBlockView
-                  key={block.id}
-                  block={block}
-                  onChange={(n) => updateBlock(block.id, n)}
-                  onDelete={() => deleteBlock(block.id)}
-                />
-              );
-          }
-        })}
-
-        <div style={{ position: "relative", marginTop: 16 }}>
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 16px",
-              background: "none",
-              border: `1px dashed ${T.rule}`,
-              cursor: "pointer",
-              color: T.stone,
-              fontFamily: T.mono,
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              width: "100%",
-              justifyContent: "center",
-            }}
-          >
-            <Plus style={{ width: 12, height: 12 }} />
-            Add Block
-          </button>
-
-          {menuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 4px)",
-                left: 0,
-                right: 0,
-                background: T.surface,
-                border: `1px solid ${T.rule}`,
-                zIndex: 10,
-              }}
-            >
-              {(Object.keys(BLOCK_LABELS) as Block["type"][]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => addBlock(type)}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "10px 16px",
-                    background: "none",
-                    border: "none",
-                    borderBottom: `1px solid ${T.rule}`,
-                    cursor: "pointer",
-                    color: T.ink,
-                    fontFamily: T.mono,
-                    fontSize: 11,
-                  }}
-                >
-                  {BLOCK_LABELS[type]}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {children}
       </main>
     </div>
+  );
+
+  if (isLoading) return shell(<EditorSkeleton />);
+
+  if (!page) {
+    return shell(
+      <div style={{ paddingTop: 24, textAlign: "center" }}>
+        <p
+          style={{
+            fontFamily: T.serifD,
+            fontSize: 18,
+            fontStyle: "italic",
+            color: T.stone,
+          }}
+        >
+          Page not found.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push("/pages")}
+          style={{
+            background: "none",
+            border: "none",
+            color: T.accent,
+            cursor: "pointer",
+            fontFamily: T.mono,
+            fontSize: 11,
+            letterSpacing: "0.08em",
+          }}
+        >
+          ← Back to Pages
+        </button>
+      </div>,
+    );
+  }
+
+  return shell(
+    <>
+      <Link
+        href="/pages"
+        style={{
+          fontFamily: T.mono,
+          fontSize: 10,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: T.stone,
+          textDecoration: "none",
+        }}
+      >
+        ← Pages
+      </Link>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginTop: 20,
+        }}
+      >
+        <input
+          value={icon}
+          onChange={(e) => setIcon(e.target.value)}
+          onBlur={persistTitle}
+          maxLength={4}
+          aria-label="Page icon"
+          className="pg-input"
+          style={{
+            width: 46,
+            padding: "8px 0",
+            fontFamily: T.mono,
+            fontSize: 18,
+            textAlign: "center",
+          }}
+        />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={persistTitle}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          aria-label="Page title"
+          placeholder="Untitled"
+          style={{
+            flex: 1,
+            background: "none",
+            border: "none",
+            outline: "none",
+            fontFamily: T.serifD,
+            fontSize: 28,
+            color: T.ink,
+            padding: "4px 0",
+            minWidth: 0,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          height: 1,
+          background: T.ruleDark,
+          marginTop: 12,
+          marginBottom: 28,
+        }}
+      />
+
+      {blocks.length === 0 && (
+        <p
+          style={{
+            fontFamily: T.serifD,
+            fontSize: 15,
+            fontStyle: "italic",
+            color: T.stone,
+            margin: "0 0 20px",
+          }}
+        >
+          An empty page — add the first block below.
+        </p>
+      )}
+
+      {blocks.map((block) => {
+        switch (block.type) {
+          case "text":
+            return (
+              <TextBlockView
+                key={block.id}
+                block={block}
+                onChange={(n) => updateBlock(block.id, n)}
+                onDelete={() => deleteBlock(block.id)}
+              />
+            );
+          case "checklist":
+            return (
+              <ChecklistBlockView
+                key={block.id}
+                block={block}
+                onChange={(n) => updateBlock(block.id, n)}
+                onDelete={() => deleteBlock(block.id)}
+              />
+            );
+          case "table":
+            return (
+              <TableBlockView
+                key={block.id}
+                block={block}
+                onChange={(n) => updateBlock(block.id, n)}
+                onDelete={() => deleteBlock(block.id)}
+              />
+            );
+          case "tracker":
+            return (
+              <TrackerBlockView
+                key={block.id}
+                block={block}
+                onChange={(n) => updateBlock(block.id, n)}
+                onDelete={() => deleteBlock(block.id)}
+              />
+            );
+        }
+      })}
+
+      <div ref={menuRef} style={{ position: "relative", marginTop: 16 }}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          className="pg-ghostbtn"
+          style={{
+            width: "100%",
+            justifyContent: "center",
+            padding: "11px 16px",
+            borderStyle: "dashed",
+          }}
+        >
+          <Plus style={{ width: 12, height: 12 }} />
+          Add Block
+        </button>
+
+        {menuOpen && (
+          <div
+            role="menu"
+            style={{
+              position: "absolute",
+              bottom: "calc(100% + 4px)",
+              left: 0,
+              right: 0,
+              background: T.surface,
+              border: `1px solid ${T.ruleDark}`,
+              zIndex: 10,
+              boxShadow: "0 12px 32px rgba(0, 0, 0, 0.35)",
+            }}
+          >
+            {BLOCK_TYPES.map(({ type, label, hint }) => (
+              <button
+                key={type}
+                type="button"
+                role="menuitem"
+                onClick={() => addBlock(type)}
+                className="pg-menuopt"
+              >
+                <span
+                  style={{
+                    fontFamily: T.mono,
+                    fontSize: 11,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: T.ink,
+                    display: "block",
+                  }}
+                >
+                  {label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: T.sans,
+                    fontSize: 11.5,
+                    color: T.stone,
+                    display: "block",
+                    marginTop: 2,
+                  }}
+                >
+                  {hint}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>,
   );
 }
