@@ -212,10 +212,27 @@ export async function createPagesFromAI(
   const supabase = createAuthedClient(accessToken);
 
   for (const page of pages) {
-    const blocks: Block[] = (page.blocks ?? []).map((b) => ({
-      ...b,
-      id: crypto.randomUUID(),
-    })) as Block[];
+    // AI output is untrusted: assign block/item ids, square table rows to the
+    // column count, and never accept invented tracker history.
+    const blocks: Block[] = (page.blocks ?? []).map((b) => {
+      const block = { ...b, id: crypto.randomUUID() } as Block;
+      if (block.type === "checklist") {
+        block.items = (block.items ?? []).map((item) => ({
+          id: item?.id || crypto.randomUUID(),
+          label: String(item?.label ?? ""),
+          done: false,
+        }));
+      } else if (block.type === "table") {
+        const columns = (block.columns ?? []).map(String);
+        block.columns = columns.length > 0 ? columns : ["Column 1"];
+        block.rows = (block.rows ?? []).map((row) =>
+          block.columns.map((_, c) => String(row?.[c] ?? "")),
+        );
+      } else if (block.type === "tracker") {
+        block.entries = [];
+      }
+      return block;
+    });
 
     const { error } = await supabase.from("pages").insert({
       user_id: userId,

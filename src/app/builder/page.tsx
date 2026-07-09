@@ -1423,7 +1423,7 @@ function AIGenerator({
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
           rows={6}
-          placeholder="e.g. I want to train 4 days a week for hypertrophy, learn guitar on the side, and track sleep and water as habits. Intermediate level, home gym."
+          placeholder="e.g. I want to train 4 days a week for hypertrophy, learn guitar on the side, and track sleep and water as habits. I'd also like to log my daily reading time and keep a list of books to read. Intermediate level, home gym."
           style={{
             width: "100%",
             background: T.tint,
