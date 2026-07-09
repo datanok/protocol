@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
-import { DM_Sans, DM_Mono, DM_Serif_Display } from "next/font/google";
+import { Public_Sans, Space_Mono, Lora } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
 
-const dmSans = DM_Sans({
+const publicSans = Public_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
 
-const dmMono = DM_Mono({
+const spaceMono = Space_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "700"],
 });
 
-const dmSerifDisplay = DM_Serif_Display({
+const lora = Lora({
   variable: "--font-serif-display",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
 });
 
@@ -55,8 +55,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body
-        className={`${dmSans.variable} ${dmMono.variable} ${dmSerifDisplay.variable} antialiased min-h-screen`}
-        style={{ background: "var(--folio-surface)", color: "var(--folio-ink)" }}
+        className={`${publicSans.variable} ${spaceMono.variable} ${lora.variable} antialiased min-h-screen`}
+        style={{
+          background: "var(--folio-surface)",
+          color: "var(--folio-ink)",
+        }}
       >
         <Providers>{children}</Providers>
 

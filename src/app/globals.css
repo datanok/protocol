@@ -25,9 +25,9 @@
   --color-text-mono: #8c8279;
 
   /* Fonts */
-  --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
-  --font-serif-display: "DM Serif Display", Georgia, serif;
+  --font-sans: "Public Sans", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+  --font-serif-display: "Lora", Georgia, serif;
 
   /* Animations (kept for compatibility) */
   --animate-shimmer: shimmer 3s infinite;
