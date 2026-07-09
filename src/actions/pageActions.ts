@@ -1,6 +1,6 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { createAuthedClient } from "@/lib/supabase";
 import type { Page, Block } from "@/types/schema";
 
 function dbErr(label: string, e: { message?: string; code?: string }): never {
@@ -27,7 +27,11 @@ function toPage(row: {
 
 // ─── read ───────────────────────────────────────────────────────────────────
 
-export async function getUserPages(userId: string): Promise<Page[]> {
+export async function getUserPages(
+  userId: string,
+  accessToken: string,
+): Promise<Page[]> {
+  const supabase = createAuthedClient(accessToken);
   const { data, error } = await supabase
     .from("pages")
     .select("id, title, icon, blocks, order_idx")
@@ -41,7 +45,11 @@ export async function getUserPages(userId: string): Promise<Page[]> {
 
 // ─── create ─────────────────────────────────────────────────────────────────
 
-async function nextOrderIdx(userId: string): Promise<number> {
+async function nextOrderIdx(
+  userId: string,
+  accessToken: string,
+): Promise<number> {
+  const supabase = createAuthedClient(accessToken);
   const { data, error } = await supabase
     .from("pages")
     .select("order_idx")
@@ -57,9 +65,11 @@ async function nextOrderIdx(userId: string): Promise<number> {
 
 export async function createPage(
   userId: string,
+  accessToken: string,
   input: { title: string; icon?: string },
 ): Promise<Page> {
-  const order = await nextOrderIdx(userId);
+  const order = await nextOrderIdx(userId, accessToken);
+  const supabase = createAuthedClient(accessToken);
 
   const { data, error } = await supabase
     .from("pages")
@@ -83,8 +93,10 @@ export async function createPage(
 export async function updatePageTitle(
   pageId: string,
   userId: string,
+  accessToken: string,
   input: { title: string; icon?: string },
 ): Promise<void> {
+  const supabase = createAuthedClient(accessToken);
   const { error } = await supabase
     .from("pages")
     .update({ title: input.title, icon: input.icon ?? null })
@@ -97,8 +109,10 @@ export async function updatePageTitle(
 export async function updatePage(
   pageId: string,
   userId: string,
+  accessToken: string,
   blocks: Block[],
 ): Promise<void> {
+  const supabase = createAuthedClient(accessToken);
   const { error } = await supabase
     .from("pages")
     .update({ blocks })
@@ -113,7 +127,9 @@ export async function updatePage(
 export async function deletePage(
   pageId: string,
   userId: string,
+  accessToken: string,
 ): Promise<void> {
+  const supabase = createAuthedClient(accessToken);
   const { error } = await supabase
     .from("pages")
     .delete()
@@ -127,8 +143,10 @@ export async function deletePage(
 
 export async function reorderPages(
   userId: string,
+  accessToken: string,
   orderedIds: string[],
 ): Promise<void> {
+  const supabase = createAuthedClient(accessToken);
   const results = await Promise.all(
     orderedIds.map((id, index) =>
       supabase
@@ -148,10 +166,12 @@ export async function reorderPages(
 export async function logTrackerEntry(
   pageId: string,
   userId: string,
+  accessToken: string,
   blockId: string,
   value: number,
   date: string,
 ): Promise<void> {
+  const supabase = createAuthedClient(accessToken);
   const { data, error } = await supabase
     .from("pages")
     .select("blocks")
@@ -181,13 +201,15 @@ export async function logTrackerEntry(
 
 export async function createPagesFromAI(
   userId: string,
+  accessToken: string,
   pages: Array<{
     title: string;
     icon?: string;
     blocks?: Array<Omit<Block, "id">>;
   }>,
 ): Promise<void> {
-  let order = await nextOrderIdx(userId);
+  let order = await nextOrderIdx(userId, accessToken);
+  const supabase = createAuthedClient(accessToken);
 
   for (const page of pages) {
     const blocks: Block[] = (page.blocks ?? []).map((b) => ({

@@ -578,11 +578,13 @@ function TrackerRow({
   pageId,
   block,
   userId,
+  accessToken,
   onLogged,
 }: {
   pageId: string;
   block: TrackerBlockData;
   userId: string;
+  accessToken: string;
   onLogged: () => void;
 }) {
   const [value, setValue] = useState("");
@@ -596,7 +598,14 @@ function TrackerRow({
     if (Number.isNaN(num) || saving) return;
     setSaving(true);
     try {
-      await logTrackerEntry(pageId, userId, block.id, num, toYmd(new Date()));
+      await logTrackerEntry(
+        pageId,
+        userId,
+        accessToken,
+        block.id,
+        num,
+        toYmd(new Date()),
+      );
       setValue("");
       onLogged();
     } finally {
@@ -673,8 +682,14 @@ function TrackerRow({
   );
 }
 
-function TrackersSection({ userId }: { userId: string }) {
-  const { data: pages = [], refetch } = usePages(userId);
+function TrackersSection({
+  userId,
+  accessToken,
+}: {
+  userId: string;
+  accessToken: string;
+}) {
+  const { data: pages = [], refetch } = usePages(userId, accessToken);
   const trackers = pages.flatMap((page) =>
     page.blocks
       .filter((b): b is TrackerBlockData => b.type === "tracker")
@@ -715,6 +730,7 @@ function TrackersSection({ userId }: { userId: string }) {
             pageId={pageId}
             block={block}
             userId={userId}
+            accessToken={accessToken}
             onLogged={refetch}
           />
         ))}
@@ -1052,7 +1068,7 @@ function ConsistencyGrid({ commitDates }: { commitDates: Set<string> }) {
 export default function FolioDashboard() {
   const vm = useDashboardVM();
   const plan = usePlan();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const qc = useQueryClient();
   const { data: stats, isLoading: statsLoading } = useDashboardStats(user?.id);
 
@@ -1189,7 +1205,10 @@ export default function FolioDashboard() {
               saving={saving}
               onToggle={toggleHabit}
             />
-            <TrackersSection userId={user!.id} />
+            <TrackersSection
+              userId={user!.id}
+              accessToken={session!.access_token}
+            />
             <ModulesSection modules={vm.modules} weekPct={weekPct} />
             <ConsistencyGrid commitDates={commitDates} />
           </div>

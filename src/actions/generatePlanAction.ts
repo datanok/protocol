@@ -99,6 +99,7 @@ Your task is to convert the user's goals into a STRICT JSON object that follows 
 export async function generatePlan(
   userId: string,
   userInput: string,
+  accessToken: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -157,7 +158,8 @@ export async function generatePlan(
     if (Array.isArray(parsed.pages) && parsed.pages.length > 0) {
       await createPagesFromAI(
         userId,
-        parsed.pages as Parameters<typeof createPagesFromAI>[1],
+        accessToken,
+        parsed.pages as Parameters<typeof createPagesFromAI>[2],
       ).catch(() => {
         // Best-effort — a pages-creation failure should not fail plan generation.
       });

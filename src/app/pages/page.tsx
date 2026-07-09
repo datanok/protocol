@@ -88,15 +88,21 @@ function NewPageForm({
 }
 
 export default function PagesListView() {
-  const { user } = useAuth();
-  const { data: pages = [], isLoading } = usePages(user?.id ?? "");
+  const { user, session } = useAuth();
+  const { data: pages = [], isLoading } = usePages(
+    user?.id ?? "",
+    session?.access_token ?? "",
+  );
   const invalidate = useInvalidatePages();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function handleCreate(title: string, icon: string) {
-    if (!user) return;
+    if (!user || !session) return;
     try {
-      await createPage(user.id, { title, icon: icon || undefined });
+      await createPage(user.id, session.access_token, {
+        title,
+        icon: icon || undefined,
+      });
       invalidate(user.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create page");
@@ -104,10 +110,10 @@ export default function PagesListView() {
   }
 
   async function handleDelete(pageId: string) {
-    if (!user) return;
+    if (!user || !session) return;
     setBusy(pageId);
     try {
-      await deletePage(pageId, user.id);
+      await deletePage(pageId, user.id, session.access_token);
       invalidate(user.id);
       toast.success("Page deleted");
     } catch (err) {
@@ -118,7 +124,7 @@ export default function PagesListView() {
   }
 
   async function handleMove(index: number, direction: -1 | 1) {
-    if (!user) return;
+    if (!user || !session) return;
     const target = index + direction;
     if (target < 0 || target >= pages.length) return;
     const reordered = [...pages];
@@ -129,6 +135,7 @@ export default function PagesListView() {
     try {
       await reorderPages(
         user.id,
+        session.access_token,
         reordered.map((p) => p.id),
       );
       invalidate(user.id);

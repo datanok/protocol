@@ -2,11 +2,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserPages } from "@/actions/pageActions";
 import type { Page } from "@/types/schema";
 
-export function usePages(userId: string) {
+export function usePages(userId: string, accessToken: string) {
   return useQuery<Page[]>({
     queryKey: ["pages", userId],
-    queryFn: () => (userId ? getUserPages(userId) : Promise.resolve([])),
-    enabled: !!userId,
+    queryFn: () =>
+      userId && accessToken
+        ? getUserPages(userId, accessToken)
+        : Promise.resolve([]),
+    enabled: !!userId && !!accessToken,
   });
 }
 

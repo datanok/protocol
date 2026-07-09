@@ -39,8 +39,11 @@ function newBlock(type: Block["type"]): Block {
 export default function PageEditorView() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
-  const { data: pages = [], isLoading } = usePages(user?.id ?? "");
+  const { user, session } = useAuth();
+  const { data: pages = [], isLoading } = usePages(
+    user?.id ?? "",
+    session?.access_token ?? "",
+  );
   const invalidate = useInvalidatePages();
 
   const page = useMemo(() => pages.find((p) => p.id === id), [pages, id]);
@@ -58,10 +61,10 @@ export default function PageEditorView() {
   }, [page]);
 
   async function persist(next: Block[]) {
-    if (!user || !page) return;
+    if (!user || !session || !page) return;
     setBlocks(next);
     try {
-      await updatePage(page.id, user.id, next);
+      await updatePage(page.id, user.id, session.access_token, next);
       invalidate(user.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
@@ -69,9 +72,9 @@ export default function PageEditorView() {
   }
 
   async function persistTitle() {
-    if (!user || !page) return;
+    if (!user || !session || !page) return;
     try {
-      await updatePageTitle(page.id, user.id, {
+      await updatePageTitle(page.id, user.id, session.access_token, {
         title: title.trim() || "Untitled",
         icon: icon.trim() || undefined,
       });
