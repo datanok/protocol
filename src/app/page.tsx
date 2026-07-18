@@ -5,12 +5,12 @@ import PublicNav from "@/components/navigation/PublicNav";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
-  surface: "var(--folio-surface)",
-  tint: "var(--folio-tint)",
-  ink: "var(--folio-ink)",
-  stone: "var(--folio-stone)",
-  rule: "var(--folio-rule)",
-  accent: "var(--folio-accent)",
+  surface: "var(--protocol-surface)",
+  tint: "var(--protocol-tint)",
+  ink: "var(--protocol-ink)",
+  stone: "var(--protocol-stone)",
+  rule: "var(--protocol-rule)",
+  accent: "var(--protocol-accent)",
   mono: "var(--font-mono)",
   serifD: "var(--font-serif-display)",
   serifT: "var(--font-serif-display)",
@@ -21,7 +21,7 @@ const T = {
 const MODULES = [
   {
     type: "WORKOUT",
-    color: "var(--folio-accent)",
+    color: "var(--protocol-accent)",
     headline: "Train with structure.",
     body: "Weekly splits, daily sessions, exercise-by-exercise set logging. PRs tracked automatically. Volume charted over 8 weeks.",
     items: [
@@ -91,7 +91,7 @@ const TEMPLATES = [
   {
     title: "PPL Hypertrophy — 6 Day",
     type: "WORKOUT",
-    color: "var(--folio-accent)",
+    color: "var(--protocol-accent)",
     forks: 24,
     tags: ["gym", "muscle", "ppl"],
   },
@@ -230,7 +230,7 @@ function AppMockup() {
       {[
         {
           title: "PPL Aesthetics Split",
-          color: "var(--folio-accent)",
+          color: "var(--protocol-accent)",
           metric: "HYPERTROPHY + FAT LOSS",
         },
         {
@@ -303,7 +303,8 @@ function AppMockup() {
             TODAY — WEDNESDAY
           </div>
           <div style={{ fontSize: 8, color: T.stone, marginTop: 3 }}>
-            <span style={{ color: "var(--folio-accent)" }}>4</span> / 12 habits
+            <span style={{ color: "var(--protocol-accent)" }}>4</span> / 12
+            habits
           </div>
         </div>
         <div
@@ -346,7 +347,7 @@ function AppMockup() {
               style={{
                 width: 14,
                 height: `${Math.round(h * 24)}px`,
-                background: i === 6 ? "var(--folio-accent)" : T.ink,
+                background: i === 6 ? "var(--protocol-accent)" : T.ink,
                 opacity: i === 6 ? 1 : 0.25 + h * 0.6,
               }}
             />
@@ -581,27 +582,27 @@ export default function LandingPage() {
         .lp-btn-primary  { transition: opacity 0.15s; }
         .lp-btn-primary:hover  { opacity: 0.82; }
         .lp-btn-outline  { transition: border-color 0.15s, color 0.15s; }
-        .lp-btn-outline:hover  { border-color: var(--folio-ink) !important; color: var(--folio-ink) !important; }
+        .lp-btn-outline:hover  { border-color: var(--protocol-ink) !important; color: var(--protocol-ink) !important; }
         .lp-btn-accent   { transition: opacity 0.15s; }
         .lp-btn-accent:hover   { opacity: 0.85; }
         .lp-tpl-card     { transition: background 0.15s; }
-        .lp-tpl-card:hover     { background: var(--folio-tint) !important; }
+        .lp-tpl-card:hover     { background: var(--protocol-tint) !important; }
         .lp-footer-link  { transition: color 0.15s; }
-        .lp-footer-link:hover  { color: var(--folio-ink) !important; }
+        .lp-footer-link:hover  { color: var(--protocol-ink) !important; }
         .lp-all-tpls     { transition: color 0.15s; }
-        .lp-all-tpls:hover     { color: var(--folio-ink) !important; }
+        .lp-all-tpls:hover     { color: var(--protocol-ink) !important; }
 
         @media (max-width: 900px) {
           .lp-pad        { padding: 0 20px; }
           .lp-hero       { grid-template-columns: 1fr; gap: 40px; }
           .lp-how        { grid-template-columns: 1fr; }
-          .lp-how > div  { border-top: 2px solid var(--folio-accent) !important; border-left: none !important; }
+          .lp-how > div  { border-top: 2px solid var(--protocol-accent) !important; border-left: none !important; }
           .lp-mods       { grid-template-columns: repeat(2, 1fr); }
-          .lp-mods > div { border-right: 1px solid var(--folio-rule) !important; }
+          .lp-mods > div { border-right: 1px solid var(--protocol-rule) !important; }
           .lp-mods > div:nth-child(2n) { border-right: none !important; }
-          .lp-mods > div { border-bottom: 1px solid var(--folio-rule); }
+          .lp-mods > div { border-bottom: 1px solid var(--protocol-rule); }
           .lp-tpls       { grid-template-columns: 1fr; }
-          .lp-tpls > div { border-right: none !important; border-bottom: 1px solid var(--folio-rule); }
+          .lp-tpls > div { border-right: none !important; border-bottom: 1px solid var(--protocol-rule); }
           .lp-mockup-wrap { max-width: 420px; }
           .lp-hide-sm    { display: none !important; }
           .lp-philosophy { grid-template-columns: 1fr; gap: 48px; }

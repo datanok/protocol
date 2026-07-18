@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Folio surface palette ─────────────────────────────────── */
+  /* ── Protocol surface palette ─────────────────────────────────── */
   --color-background: #f7f4ef;
   --color-surface-l1: #f2ede5;
   --color-surface-l2: #ede7dc;
@@ -85,51 +85,51 @@
 
 /* ── Theme/Accent overrides are intentionally unlayered (Tailwind v4) ─────── */
 [data-theme="dark"] {
-  --folio-surface: #1a1714;
-  --folio-tint: #221e1a;
-  --folio-ink: #f0ede6;
-  --folio-stone: #9a8e83;
-  --folio-rule: #2a2520;
-  --folio-rule-dark: #38332d;
-  --folio-positive: #4ade80;
-  --folio-negative: #fb7185;
+  --protocol-surface: #1a1714;
+  --protocol-tint: #221e1a;
+  --protocol-ink: #f0ede6;
+  --protocol-stone: #9a8e83;
+  --protocol-rule: #2a2520;
+  --protocol-rule-dark: #38332d;
+  --protocol-positive: #4ade80;
+  --protocol-negative: #fb7185;
 }
 
 /* vermillion is :root default — listed for completeness */
 [data-accent="vermillion"] {
-  --folio-accent: #c2410c;
+  --protocol-accent: #c2410c;
 }
 [data-accent="slate"] {
-  --folio-accent: #5b7fa6;
+  --protocol-accent: #5b7fa6;
 }
 [data-accent="forest"] {
-  --folio-accent: #2e7d32;
+  --protocol-accent: #2e7d32;
 }
 [data-accent="aubergine"] {
-  --folio-accent: #7a5c8a;
+  --protocol-accent: #7a5c8a;
 }
 [data-accent="obsidian"] {
-  --folio-accent: #374151;
+  --protocol-accent: #374151;
 }
 
 @layer base {
   :root {
-    /* ── Folio raw design tokens — use anywhere via var() ─────── */
-    --folio-surface: #f7f4ef;
-    --folio-ink: #1c1714;
-    --folio-stone: #8c8279;
-    --folio-rule: #e8e2d9;
-    --folio-rule-dark: #d8d0c2;
-    --folio-accent: #c2410c;
-    --folio-positive: #166534;
-    --folio-negative: #9f1239;
-    --folio-tint: #f2ede5;
+    /* ── Protocol raw design tokens — use anywhere via var() ─────── */
+    --protocol-surface: #f7f4ef;
+    --protocol-ink: #1c1714;
+    --protocol-stone: #8c8279;
+    --protocol-rule: #e8e2d9;
+    --protocol-rule-dark: #d8d0c2;
+    --protocol-accent: #c2410c;
+    --protocol-positive: #166534;
+    --protocol-negative: #9f1239;
+    --protocol-tint: #f2ede5;
   }
 
   html,
   body {
-    background-color: var(--folio-surface);
-    color: var(--folio-ink);
+    background-color: var(--protocol-surface);
+    color: var(--protocol-ink);
     font-family: var(--font-sans);
   }
 
@@ -139,43 +139,43 @@
 
   /* Remove focus rings on click, keep for keyboard */
   :focus-visible {
-    outline: 2px solid var(--folio-accent);
+    outline: 2px solid var(--protocol-accent);
     outline-offset: 2px;
   }
 }
 
 @layer utilities {
-  /* ── Folio primitives ─────────────────────────────────────── */
-  .folio-label {
+  /* ── Protocol primitives ─────────────────────────────────────── */
+  .protocol-label {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--folio-stone);
+    color: var(--protocol-stone);
   }
 
-  .folio-hr {
+  .protocol-hr {
     height: 1px;
-    background: var(--folio-rule);
+    background: var(--protocol-rule);
     border: none;
     width: 100%;
   }
 
-  .folio-hr-ink {
+  .protocol-hr-ink {
     height: 1px;
-    background: var(--folio-ink);
+    background: var(--protocol-ink);
     border: none;
     width: 100%;
   }
 
-  .folio-pill {
+  .protocol-pill {
     display: inline-flex;
     align-items: center;
     padding: 4px 10px;
-    border: 1px solid var(--folio-rule);
+    border: 1px solid var(--protocol-rule);
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--folio-ink);
+    color: var(--protocol-ink);
     background: transparent;
     cursor: pointer;
     transition:
@@ -184,25 +184,25 @@
       color 0.1s;
   }
 
-  .folio-pill:hover {
-    border-color: var(--folio-rule-dark);
+  .protocol-pill:hover {
+    border-color: var(--protocol-rule-dark);
   }
 
-  .folio-pill-on {
-    background: var(--folio-ink) !important;
-    color: var(--folio-surface) !important;
-    border-color: var(--folio-ink) !important;
+  .protocol-pill-on {
+    background: var(--protocol-ink) !important;
+    color: var(--protocol-surface) !important;
+    border-color: var(--protocol-ink) !important;
   }
 
   .shadow-card {
     box-shadow:
-      0 0 0 1px var(--folio-rule),
+      0 0 0 1px var(--protocol-rule),
       0 4px 12px rgba(28, 23, 20, 0.06);
   }
 
   .glow-active {
     box-shadow:
-      0 0 0 1px var(--folio-accent),
+      0 0 0 1px var(--protocol-accent),
       0 0 20px rgba(194, 65, 12, 0.08);
   }
 
@@ -226,7 +226,7 @@
     gap: 44px;
   }
   .fp-sidebar {
-    border-right: 1px solid var(--folio-rule);
+    border-right: 1px solid var(--protocol-rule);
     padding-right: 20px;
     position: sticky;
     top: 72px;
@@ -243,7 +243,7 @@
     }
     .fp-sidebar {
       border-right: none;
-      border-bottom: 1px solid var(--folio-rule);
+      border-bottom: 1px solid var(--protocol-rule);
       padding-right: 0;
       padding-bottom: 16px;
       margin-bottom: 24px;
@@ -280,7 +280,7 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid var(--folio-rule-dark);
+  border: 1px solid var(--protocol-rule-dark);
   cursor: pointer;
   padding: 0;
   color: transparent;
@@ -289,12 +289,12 @@
     border-color 0.12s ease-out;
 }
 .pg-check:hover {
-  border-color: var(--folio-ink);
+  border-color: var(--protocol-ink);
 }
 .pg-check[aria-checked="true"] {
-  background: var(--folio-ink);
-  border-color: var(--folio-ink);
-  color: var(--folio-surface);
+  background: var(--protocol-ink);
+  border-color: var(--protocol-ink);
+  color: var(--protocol-surface);
 }
 
 /* Row-level hover reveal for secondary controls */
@@ -323,43 +323,43 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: var(--folio-stone);
+  color: var(--protocol-stone);
   transition:
     color 0.12s ease-out,
     background 0.12s ease-out;
 }
 .pg-iconbtn:hover {
-  color: var(--folio-ink);
-  background: var(--folio-rule);
+  color: var(--protocol-ink);
+  background: var(--protocol-rule);
 }
 .pg-iconbtn:disabled {
   opacity: 0.3;
   cursor: default;
 }
 .pg-iconbtn:disabled:hover {
-  color: var(--folio-stone);
+  color: var(--protocol-stone);
   background: transparent;
 }
 .pg-iconbtn-danger:hover {
-  color: var(--folio-negative);
+  color: var(--protocol-negative);
   background: transparent;
 }
 
 /* Text inputs — tonal, accent focus */
 .pg-input {
-  background: var(--folio-tint);
-  border: 1px solid var(--folio-rule);
+  background: var(--protocol-tint);
+  border: 1px solid var(--protocol-rule);
   outline: none;
-  color: var(--folio-ink);
+  color: var(--protocol-ink);
   box-sizing: border-box;
   transition: border-color 0.12s ease-out;
 }
 .pg-input:focus {
-  border-color: var(--folio-accent);
+  border-color: var(--protocol-accent);
   outline: none;
 }
 .pg-input::placeholder {
-  color: var(--folio-stone);
+  color: var(--protocol-stone);
 }
 
 /* Pages list row — tonal hover shift */
@@ -367,7 +367,7 @@
   transition: background 0.12s ease-out;
 }
 .pg-row:hover {
-  background: var(--folio-tint);
+  background: var(--protocol-tint);
 }
 
 /* Data table */
@@ -377,25 +377,25 @@
 }
 .pg-table th,
 .pg-table td {
-  border: 1px solid var(--folio-rule);
+  border: 1px solid var(--protocol-rule);
   padding: 0;
   min-width: 96px;
 }
 .pg-table th {
-  background: var(--folio-tint);
+  background: var(--protocol-tint);
 }
 .pg-table td.pg-gutter,
 .pg-table th.pg-gutter {
   min-width: 36px;
   width: 36px;
   text-align: center;
-  background: var(--folio-tint);
+  background: var(--protocol-tint);
 }
 .pg-table tbody tr:hover td {
-  background: color-mix(in srgb, var(--folio-tint) 55%, transparent);
+  background: color-mix(in srgb, var(--protocol-tint) 55%, transparent);
 }
 .pg-table tbody tr:hover td.pg-gutter {
-  background: var(--folio-tint);
+  background: var(--protocol-tint);
 }
 .pg-cell {
   width: 100%;
@@ -405,12 +405,12 @@
   padding: 7px 9px;
   font-family: var(--font-sans);
   font-size: 12.5px;
-  color: var(--folio-ink);
+  color: var(--protocol-ink);
   box-sizing: border-box;
 }
 .pg-cell:focus {
-  background: var(--folio-tint);
-  box-shadow: inset 0 0 0 1px var(--folio-accent);
+  background: var(--protocol-tint);
+  box-shadow: inset 0 0 0 1px var(--protocol-accent);
 }
 .pg-colname {
   width: 100%;
@@ -422,11 +422,11 @@
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--folio-ink);
+  color: var(--protocol-ink);
   box-sizing: border-box;
 }
 .pg-colname:focus {
-  box-shadow: inset 0 0 0 1px var(--folio-accent);
+  box-shadow: inset 0 0 0 1px var(--protocol-accent);
 }
 
 /* Row gutter: number by default, delete button on row hover/focus */
@@ -459,9 +459,9 @@ tr.pg-hoverable:focus-within .pg-rowdel {
   align-items: center;
   gap: 6px;
   background: transparent;
-  border: 1px solid var(--folio-rule);
+  border: 1px solid var(--protocol-rule);
   cursor: pointer;
-  color: var(--folio-stone);
+  color: var(--protocol-stone);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -472,8 +472,8 @@ tr.pg-hoverable:focus-within .pg-rowdel {
     border-color 0.12s ease-out;
 }
 .pg-ghostbtn:hover {
-  color: var(--folio-ink);
-  border-color: var(--folio-rule-dark);
+  color: var(--protocol-ink);
+  border-color: var(--protocol-rule-dark);
 }
 
 /* Add-block menu options */
@@ -484,7 +484,7 @@ tr.pg-hoverable:focus-within .pg-rowdel {
   padding: 12px 16px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--folio-rule);
+  border-bottom: 1px solid var(--protocol-rule);
   cursor: pointer;
   transition: background 0.12s ease-out;
 }
@@ -492,7 +492,7 @@ tr.pg-hoverable:focus-within .pg-rowdel {
   border-bottom: none;
 }
 .pg-menuopt:hover {
-  background: var(--folio-tint);
+  background: var(--protocol-tint);
 }
 
 @media (prefers-reduced-motion: reduce) {

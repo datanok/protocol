@@ -23,6 +23,7 @@ Create a `.env.local` at the project root:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
 ```
 
 ## Project Structure
@@ -83,33 +84,33 @@ Plans are stored as `plan_json: jsonb` in the `plans` table. The root type is `A
 `modules` is a discriminated union on `type`. Always narrow before accessing `data`:
 
 ```ts
-if (mod.type === 'workout') {
+if (mod.type === "workout") {
   const { split, focus } = mod.data; // WorkoutModuleData
 }
 ```
 
 Module shapes:
 
-| type | data fields |
-|---|---|
-| `workout` | `split: Record<Day, string[]>`, `focus: string` |
-| `skill` | `subject`, `nodes: ModuleNode[]` (metric: bpm) |
-| `study` | `subject`, `nodes: ModuleNode[]` (metric: confidence 1–5), `dailyGoalMin` |
-| `nutrition` | `wfo: string`, `wfh: string`, `notes: string` |
+| type        | data fields                                                               |
+| ----------- | ------------------------------------------------------------------------- |
+| `workout`   | `split: Record<Day, string[]>`, `focus: string`                           |
+| `skill`     | `subject`, `nodes: ModuleNode[]` (metric: bpm)                            |
+| `study`     | `subject`, `nodes: ModuleNode[]` (metric: confidence 1–5), `dailyGoalMin` |
+| `nutrition` | `wfo: string`, `wfh: string`, `notes: string`                             |
 
 ## Database
 
 Core tables in Supabase (all have Row Level Security enabled):
 
-| Table | Purpose |
-|---|---|
-| `plans` | Plan JSON blobs; DB trigger enforces one active plan per user |
-| `profiles` | Username, bio, avatar, accent color |
-| `daily_commits` | Daily habit logs |
-| `skill_sessions` / `skill_node_progress` | Skill practice tracking |
-| `workout_logs` | Per-set exercise history (weight, reps) |
-| `visual_logs` | Progress image uploads |
-| `templates` | Community-published plans |
+| Table                                    | Purpose                                                       |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| `plans`                                  | Plan JSON blobs; DB trigger enforces one active plan per user |
+| `profiles`                               | Username, bio, avatar, accent color                           |
+| `daily_commits`                          | Daily habit logs                                              |
+| `skill_sessions` / `skill_node_progress` | Skill practice tracking                                       |
+| `workout_logs`                           | Per-set exercise history (weight, reps)                       |
+| `visual_logs`                            | Progress image uploads                                        |
+| `templates`                              | Community-published plans                                     |
 
 ### workout_logs migration
 

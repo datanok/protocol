@@ -1,0 +1,88 @@
+// Shared primitive components. Use className from globals.css @layer utilities
+// so the inline style clutter doesn't repeat in every page file.
+import { T } from "@/lib/tokens";
+
+export function Label({ children }: { children: React.ReactNode }) {
+  return <div className="protocol-label">{children}</div>;
+}
+
+export function LabelXS({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div className="protocol-label" style={style}>
+      {children}
+    </div>
+  );
+}
+
+export function Hr({ ink }: { ink?: boolean }) {
+  return <div className={ink ? "protocol-hr-ink" : "protocol-hr"} />;
+}
+
+export function ProtocolInput(
+  props: React.InputHTMLAttributes<HTMLInputElement>,
+) {
+  return (
+    <input
+      {...props}
+      style={{
+        background: T.tint,
+        border: `1px solid ${T.rule}`,
+        outline: "none",
+        padding: "7px 10px",
+        fontFamily: T.mono,
+        fontSize: 12,
+        color: T.ink,
+        width: "100%",
+        boxSizing: "border-box",
+        textAlign: "center",
+        ...props.style,
+      }}
+      onFocus={(e) => {
+        (e.target as HTMLInputElement).style.borderColor = T.accent;
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        (e.target as HTMLInputElement).style.borderColor = T.rule;
+        props.onBlur?.(e);
+      }}
+    />
+  );
+}
+
+export function ProtocolTextarea(
+  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+) {
+  return (
+    <textarea
+      {...props}
+      style={{
+        width: "100%",
+        background: T.tint,
+        border: `1px solid ${T.rule}`,
+        outline: "none",
+        padding: "10px 12px",
+        fontFamily: T.mono,
+        fontSize: 11,
+        color: T.ink,
+        resize: "none",
+        boxSizing: "border-box",
+        lineHeight: 1.6,
+        ...props.style,
+      }}
+      onFocus={(e) => {
+        (e.target as HTMLTextAreaElement).style.borderColor = T.accent;
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        (e.target as HTMLTextAreaElement).style.borderColor = T.rule;
+        props.onBlur?.(e);
+      }}
+    />
+  );
+}

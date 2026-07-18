@@ -31,8 +31,8 @@ export const metadata: Metadata = {
 const themeBootstrapScript = `
 (() => {
   try {
-    const dark = localStorage.getItem('folio-dark') === 'true';
-    const accent = localStorage.getItem('folio-accent') || 'vermillion';
+    const dark = localStorage.getItem('protocol-dark') === 'true';
+    const accent = localStorage.getItem('protocol-accent') || 'vermillion';
     const root = document.documentElement;
     root.setAttribute('data-theme', dark ? 'dark' : 'light');
     root.setAttribute('data-accent', accent);
@@ -57,8 +57,8 @@ export default function RootLayout({
       <body
         className={`${publicSans.variable} ${spaceMono.variable} ${lora.variable} antialiased min-h-screen`}
         style={{
-          background: "var(--folio-surface)",
-          color: "var(--folio-ink)",
+          background: "var(--protocol-surface)",
+          color: "var(--protocol-ink)",
         }}
       >
         <Providers>{children}</Providers>
@@ -66,9 +66,9 @@ export default function RootLayout({
         <Toaster
           toastOptions={{
             style: {
-              background: "var(--folio-surface)",
-              border: "1px solid var(--folio-rule)",
-              color: "var(--folio-ink)",
+              background: "var(--protocol-surface)",
+              border: "1px solid var(--protocol-rule)",
+              color: "var(--protocol-ink)",
               fontFamily: "var(--font-mono)",
               fontSize: "12px",
               borderRadius: "0px",

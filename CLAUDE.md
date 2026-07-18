@@ -21,11 +21,12 @@ There is no test suite in this project.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
 ```
 
 ## What This App Is
 
-**Folio** — a personal life OS. Users build structured plans across four module types: **workout** (weekly splits + exercise logging), **skill** (node-based learning paths + XP), **study** (daily minute targets + subject nodes), and **nutrition** (WFO/WFH meal plans + macros). Plans are generated via the Gemini API or built manually in a visual editor, then committed to daily.
+**Protocol** — a personal life OS. Users build structured plans across four module types: **workout** (weekly splits + exercise logging), **skill** (node-based learning paths + XP), **study** (daily minute targets + subject nodes), and **nutrition** (WFO/WFH meal plans + macros). Plans are generated via the Gemini or Claude API (user-selectable) or built manually in a visual editor, then committed to daily.
 
 ## Architecture
 
@@ -68,7 +69,7 @@ Every plan fetch transparently upgrades v1 (flat schema) → v2 (module-based). 
 ### Theme System
 
 - **No `tailwind.config.js`** — Tailwind v4 uses `@theme` inside `src/app/globals.css`
-- CSS variables: `--folio-surface`, `--folio-ink`, `--folio-accent`, etc.
+- CSS variables: `--protocol-surface`, `--protocol-ink`, `--protocol-accent`, etc.
 - `data-theme="dark|light"` and `data-accent="vermillion|slate|forest|aubergine|obsidian"` on `<html>`
 - `ThemeContext` persists choices to `localStorage` and the `profiles` table
 
@@ -76,14 +77,14 @@ Every plan fetch transparently upgrades v1 (flat schema) → v2 (module-based). 
 
 Client initialized in `src/lib/supabase.ts`. Core tables:
 
-| Table | Purpose |
-|---|---|
-| `plans` | Plan JSON blobs; `is_active` enforced by DB trigger |
-| `profiles` | Username, bio, avatar, accent color |
-| `daily_commits` | Daily habit logs |
-| `skill_sessions` / `skill_node_progress` | Skill practice tracking |
-| `visual_logs` | Progress image uploads |
-| `templates` | Community-published plans |
+| Table                                    | Purpose                                             |
+| ---------------------------------------- | --------------------------------------------------- |
+| `plans`                                  | Plan JSON blobs; `is_active` enforced by DB trigger |
+| `profiles`                               | Username, bio, avatar, accent color                 |
+| `daily_commits`                          | Daily habit logs                                    |
+| `skill_sessions` / `skill_node_progress` | Skill practice tracking                             |
+| `visual_logs`                            | Progress image uploads                              |
+| `templates`                              | Community-published plans                           |
 
 All tables use Row Level Security. Server actions in `src/actions/` are the only write path.
 

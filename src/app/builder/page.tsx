@@ -4,18 +4,19 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { createPlan } from "@/actions/planActions";
-import { generatePlan } from "@/actions/generatePlanAction";
+import { generatePlan, importPlan } from "@/actions/generatePlanAction";
+import { SCHEMA_PROMPT } from "@/lib/schemaPrompt";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 const T = {
-  surface: "var(--folio-surface)",
-  tint: "var(--folio-tint)",
-  ink: "var(--folio-ink)",
-  stone: "var(--folio-stone)",
-  rule: "var(--folio-rule)",
-  accent: "var(--folio-accent)",
-  negative: "var(--folio-negative)",
-  positive: "var(--folio-positive)",
+  surface: "var(--protocol-surface)",
+  tint: "var(--protocol-tint)",
+  ink: "var(--protocol-ink)",
+  stone: "var(--protocol-stone)",
+  rule: "var(--protocol-rule)",
+  accent: "var(--protocol-accent)",
+  negative: "var(--protocol-negative)",
+  positive: "var(--protocol-positive)",
   mono: "var(--font-mono)",
   serifD: "var(--font-serif-display)",
   serifT: "var(--font-serif-display)",
@@ -1326,12 +1327,41 @@ function AIGenerator({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<"gemini" | "claude">("gemini");
+  const [importJson, setImportJson] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyPrompt = async () => {
+    await navigator.clipboard.writeText(SCHEMA_PROMPT + "\n\nMy goals:\n");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleImport = async () => {
+    if (!importJson.trim() || importing) return;
+    setImporting(true);
+    setImportError(null);
+    const result = await importPlan(user.id, importJson.trim(), accessToken);
+    if (result.ok) {
+      window.location.href = "/dashboard";
+    } else {
+      setImportError(result.error);
+      setImporting(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!input.trim() || loading) return;
     setLoading(true);
     setError(null);
-    const result = await generatePlan(user.id, input.trim(), accessToken);
+    const result = await generatePlan(
+      user.id,
+      input.trim(),
+      accessToken,
+      provider,
+    );
     if (result.ok) {
       window.location.href = "/dashboard";
     } else {
@@ -1341,169 +1371,403 @@ function AIGenerator({
   };
 
   return (
-    <div style={{ border: `1px solid ${T.rule}`, maxWidth: 640 }}>
-      <div
-        style={{ padding: "16px 20px", borderBottom: `1px solid ${T.rule}` }}
-      >
+    <div style={{ maxWidth: 640 }}>
+      <div style={{ border: `1px solid ${T.rule}` }}>
         <div
-          style={{
-            fontFamily: T.mono,
-            fontSize: 10,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: T.stone,
-            marginBottom: 4,
-          }}
+          style={{ padding: "16px 20px", borderBottom: `1px solid ${T.rule}` }}
         >
-          Generate with AI
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.stone,
+              marginBottom: 4,
+            }}
+          >
+            Generate with AI
+          </div>
+          <div
+            style={{
+              fontFamily: T.serifT,
+              fontSize: 18,
+              fontStyle: "italic",
+              color: T.ink,
+            }}
+          >
+            Describe your goals
+          </div>
         </div>
-        <div
-          style={{
-            fontFamily: T.serifT,
-            fontSize: 18,
-            fontStyle: "italic",
-            color: T.ink,
-          }}
-        >
-          Describe your goals
-        </div>
-      </div>
 
-      {error && (
+        {error && (
+          <div
+            style={{
+              padding: "12px 20px",
+              borderBottom: `1px solid ${T.negative}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <span
+              style={{ fontFamily: T.mono, fontSize: 10, color: T.negative }}
+            >
+              {error}
+            </span>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={loading}
+              style={{
+                background: "none",
+                border: `1px solid ${T.negative}`,
+                padding: "4px 12px",
+                cursor: "pointer",
+                fontFamily: T.mono,
+                fontSize: 9,
+                color: T.negative,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                flexShrink: 0,
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        <div style={{ padding: "20px" }}>
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.stone,
+              marginBottom: 8,
+            }}
+          >
+            Model
+          </div>
+          <div
+            style={{
+              display: "flex",
+              width: "fit-content",
+              gap: 2,
+              marginBottom: 16,
+            }}
+          >
+            {(["gemini", "claude"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setProvider(p)}
+                disabled={loading}
+                style={{
+                  padding: "8px 18px",
+                  background: provider === p ? T.ink : T.tint,
+                  color: provider === p ? T.surface : T.stone,
+                  border: "none",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  fontFamily: T.mono,
+                  fontSize: 9,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.stone,
+              marginBottom: 8,
+            }}
+          >
+            Your Goals
+          </div>
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={loading}
+            rows={6}
+            placeholder="e.g. I want to train 4 days a week for hypertrophy, learn guitar on the side, and track sleep and water as habits. I'd also like to log my daily reading time and keep a list of books to read. Intermediate level, home gym."
+            style={{
+              width: "100%",
+              background: T.tint,
+              border: `1px solid ${T.rule}`,
+              outline: "none",
+              padding: "12px 14px",
+              fontFamily: T.mono,
+              fontSize: 11,
+              color: T.ink,
+              resize: "none",
+              boxSizing: "border-box",
+              lineHeight: 1.6,
+              opacity: loading ? 0.5 : 1,
+            }}
+            onFocus={(e) =>
+              ((e.target as HTMLTextAreaElement).style.borderColor = T.accent)
+            }
+            onBlur={(e) =>
+              ((e.target as HTMLTextAreaElement).style.borderColor = T.rule)
+            }
+          />
+        </div>
+
         <div
           style={{
-            padding: "12px 20px",
-            borderBottom: `1px solid ${T.negative}`,
+            padding: "14px 20px",
+            borderTop: `1px solid ${T.rule}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 12,
           }}
         >
-          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.negative }}>
-            {error}
-          </span>
+          <a
+            href="/dashboard"
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: T.stone,
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            Cancel
+          </a>
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={loading || !input.trim()}
             style={{
-              background: "none",
-              border: `1px solid ${T.negative}`,
-              padding: "4px 12px",
-              cursor: "pointer",
+              padding: "10px 28px",
+              background: !loading && input.trim() ? T.ink : T.tint,
+              color: !loading && input.trim() ? T.surface : T.stone,
+              border: `1px solid ${!loading && input.trim() ? T.ink : T.rule}`,
+              cursor: !loading && input.trim() ? "pointer" : "not-allowed",
               fontFamily: T.mono,
-              fontSize: 9,
-              color: T.negative,
-              letterSpacing: "0.1em",
+              fontSize: 10,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
-              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
-            Retry
+            {loading ? (
+              <>
+                <Loader2
+                  style={{
+                    width: 12,
+                    height: 12,
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+                Generating…
+              </>
+            ) : (
+              "Generate Plan →"
+            )}
           </button>
         </div>
-      )}
-
-      <div style={{ padding: "20px" }}>
-        <div
-          style={{
-            fontFamily: T.mono,
-            fontSize: 9,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: T.stone,
-            marginBottom: 8,
-          }}
-        >
-          Your Goals
-        </div>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={loading}
-          rows={6}
-          placeholder="e.g. I want to train 4 days a week for hypertrophy, learn guitar on the side, and track sleep and water as habits. I'd also like to log my daily reading time and keep a list of books to read. Intermediate level, home gym."
-          style={{
-            width: "100%",
-            background: T.tint,
-            border: `1px solid ${T.rule}`,
-            outline: "none",
-            padding: "12px 14px",
-            fontFamily: T.mono,
-            fontSize: 11,
-            color: T.ink,
-            resize: "none",
-            boxSizing: "border-box",
-            lineHeight: 1.6,
-            opacity: loading ? 0.5 : 1,
-          }}
-          onFocus={(e) =>
-            ((e.target as HTMLTextAreaElement).style.borderColor = T.accent)
-          }
-          onBlur={(e) =>
-            ((e.target as HTMLTextAreaElement).style.borderColor = T.rule)
-          }
-        />
       </div>
 
       <div
-        style={{
-          padding: "14px 20px",
-          borderTop: `1px solid ${T.rule}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <a
-          href="/dashboard"
-          style={{
-            fontFamily: T.mono,
-            fontSize: 10,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: T.stone,
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-          }}
+        style={{ width: 40, height: 4, background: T.accent, margin: "28px 0" }}
+      />
+
+      <div style={{ border: `1px solid ${T.rule}` }}>
+        <div
+          style={{ padding: "16px 20px", borderBottom: `1px solid ${T.rule}` }}
         >
-          Cancel
-        </a>
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={loading || !input.trim()}
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.stone,
+              marginBottom: 4,
+            }}
+          >
+            Or bring your own AI
+          </div>
+          <div
+            style={{
+              fontFamily: T.serifT,
+              fontSize: 18,
+              fontStyle: "italic",
+              color: T.ink,
+            }}
+          >
+            Paste a generated plan
+          </div>
+        </div>
+
+        {importError && (
+          <div
+            style={{
+              padding: "12px 20px",
+              borderBottom: `1px solid ${T.negative}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <span
+              style={{ fontFamily: T.mono, fontSize: 10, color: T.negative }}
+            >
+              {importError}
+            </span>
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              style={{
+                background: "none",
+                border: `1px solid ${T.negative}`,
+                padding: "4px 12px",
+                cursor: "pointer",
+                fontFamily: T.mono,
+                fontSize: 9,
+                color: T.negative,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                flexShrink: 0,
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        <div style={{ padding: "20px" }}>
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              color: T.stone,
+              lineHeight: 1.7,
+              marginBottom: 12,
+            }}
+          >
+            Copy our prompt, run it in ChatGPT, Claude, or any AI with your
+            goals appended, then paste the JSON it returns below.
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyPrompt}
+            style={{
+              padding: "8px 18px",
+              background: copied ? T.ink : T.tint,
+              color: copied ? T.surface : T.ink,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              marginBottom: 16,
+            }}
+          >
+            {copied ? "Copied ✓" : "Copy Prompt"}
+          </button>
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.stone,
+              marginBottom: 8,
+            }}
+          >
+            Generated JSON
+          </div>
+          <textarea
+            value={importJson}
+            onChange={(e) => setImportJson(e.target.value)}
+            disabled={importing}
+            rows={8}
+            placeholder="Paste the JSON your AI generated…"
+            style={{
+              width: "100%",
+              background: T.tint,
+              border: `1px solid ${T.rule}`,
+              outline: "none",
+              padding: "12px 14px",
+              fontFamily: T.mono,
+              fontSize: 11,
+              color: T.ink,
+              resize: "none",
+              boxSizing: "border-box",
+              lineHeight: 1.6,
+              opacity: importing ? 0.5 : 1,
+            }}
+            onFocus={(e) =>
+              ((e.target as HTMLTextAreaElement).style.borderColor = T.accent)
+            }
+            onBlur={(e) =>
+              ((e.target as HTMLTextAreaElement).style.borderColor = T.rule)
+            }
+          />
+        </div>
+
+        <div
           style={{
-            padding: "10px 28px",
-            background: !loading && input.trim() ? T.ink : T.tint,
-            color: !loading && input.trim() ? T.surface : T.stone,
-            border: `1px solid ${!loading && input.trim() ? T.ink : T.rule}`,
-            cursor: !loading && input.trim() ? "pointer" : "not-allowed",
-            fontFamily: T.mono,
-            fontSize: 10,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
+            padding: "14px 20px",
+            borderTop: `1px solid ${T.rule}`,
             display: "flex",
-            alignItems: "center",
-            gap: 8,
+            justifyContent: "flex-end",
           }}
         >
-          {loading ? (
-            <>
-              <Loader2
-                style={{
-                  width: 12,
-                  height: 12,
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              Generating…
-            </>
-          ) : (
-            "Generate Plan →"
-          )}
-        </button>
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={importing || !importJson.trim()}
+            style={{
+              padding: "10px 28px",
+              background: !importing && importJson.trim() ? T.ink : T.tint,
+              color: !importing && importJson.trim() ? T.surface : T.stone,
+              border: "none",
+              cursor:
+                !importing && importJson.trim() ? "pointer" : "not-allowed",
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {importing ? (
+              <>
+                <Loader2
+                  style={{
+                    width: 12,
+                    height: 12,
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+                Importing…
+              </>
+            ) : (
+              "Import Plan →"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

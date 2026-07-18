@@ -105,9 +105,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // ── Init from localStorage on first client render ─────────────
   useEffect(() => {
-    const savedDark = localStorage.getItem("folio-dark") === "true";
+    const savedDark = localStorage.getItem("protocol-dark") === "true";
     const savedAccent =
-      (localStorage.getItem("folio-accent") as AccentKey | null) ??
+      (localStorage.getItem("protocol-accent") as AccentKey | null) ??
       "vermillion";
     setDark(savedDark);
     setAccentState(savedAccent);
@@ -124,7 +124,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const a = await fetchAccentForUser(user.id);
       if (!a || cancelled) return;
       setAccentState(a);
-      localStorage.setItem("folio-accent", a);
+      localStorage.setItem("protocol-accent", a);
       applyToDOM(dark, a);
     })();
 
@@ -138,13 +138,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   function toggleDark() {
     const next = !dark;
     setDark(next);
-    localStorage.setItem("folio-dark", String(next));
+    localStorage.setItem("protocol-dark", String(next));
     applyToDOM(next, accent);
   }
 
   async function setAccent(a: AccentKey) {
     setAccentState(a);
-    localStorage.setItem("folio-accent", a);
+    localStorage.setItem("protocol-accent", a);
     applyToDOM(dark, a);
     if (user) {
       await persistAccentForUser(user.id, a);

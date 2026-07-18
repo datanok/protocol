@@ -1065,7 +1065,7 @@ function ConsistencyGrid({ commitDates }: { commitDates: Set<string> }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function FolioDashboard() {
+export default function ProtocolDashboard() {
   const vm = useDashboardVM();
   const plan = usePlan();
   const { user, session } = useAuth();
@@ -1149,7 +1149,7 @@ export default function FolioDashboard() {
           .db-today-row       { grid-template-columns: 90px 1fr 22px !important; gap: 12px !important; }
           .db-hero-title      { font-size: clamp(22px, 7vw, 32px) !important; line-height: 1.15 !important; letter-spacing: -0.5px !important; }
           .db-hero-min        { min-height: 0 !important; }
-          .db-mobile-stats    { display: flex !important; flex-wrap: wrap; align-items: baseline; gap: 10px 20px; padding-bottom: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--folio-rule); }
+          .db-mobile-stats    { display: flex !important; flex-wrap: wrap; align-items: baseline; gap: 10px 20px; padding-bottom: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--protocol-rule); }
           .db-mobile-cta      { display: flex !important; }
         }
       `}</style>

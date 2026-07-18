@@ -19,7 +19,7 @@ function normalizeSubject(s: string) {
   return s.trim().toLowerCase();
 }
 
-// ─── Log Session Modal (Folio-styled) ─────────────────────────────────────────
+// ─── Log Session Modal (Protocol-styled) ─────────────────────────────────────────
 function LogSessionModal({
   open,
   onClose,
@@ -724,11 +724,11 @@ function SkillPageContent() {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .sk-btn-log:hover    { opacity: 0.85; }
         .sk-btn-primary:hover:not(:disabled) { opacity: 0.85; }
-        .sk-btn-ghost:hover:not(:disabled)   { background: var(--folio-tint) !important; }
-        .sk-quality-btn:not(.is-active):hover { border-color: var(--folio-stone) !important; background: var(--folio-tint) !important; color: var(--folio-ink) !important; }
+        .sk-btn-ghost:hover:not(:disabled)   { background: var(--protocol-tint) !important; }
+        .sk-quality-btn:not(.is-active):hover { border-color: var(--protocol-stone) !important; background: var(--protocol-tint) !important; color: var(--protocol-ink) !important; }
         .sk-btn-log, .sk-btn-primary, .sk-btn-ghost, .sk-quality-btn { transition: opacity 0.15s, background 0.15s, border-color 0.15s; }
         .sk-select-wrap { position: relative; }
-        .sk-select-wrap::after { content: ''; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--folio-stone); pointer-events: none; }
+        .sk-select-wrap::after { content: ''; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--protocol-stone); pointer-events: none; }
         .sk-select { appearance: none; -webkit-appearance: none; }
         @media (max-width: 768px) {
           .sk-main { padding: 56px 16px 64px !important; }
