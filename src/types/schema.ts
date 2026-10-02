@@ -49,10 +49,22 @@ export type Habit = {
 
 // ─── Module data shapes ──────────────────────────────────────────────────────
 
+// An exercise in a workout split is either a plain free-text label (the
+// original shape — always valid, always supported) or a structured pick
+// from the vendored exercise catalog (src/lib/exercises.ts).
+export type ExerciseEntry =
+  | string
+  | {
+      name: string;
+      bodyPart?: string;
+      equipment?: string;
+      exerciseId?: string;
+    };
+
 export type WorkoutModuleData = {
   focus: string;
   dayFocus?: Record<string, string>; // Per-day session label, e.g. { Monday: "PULL — 35 min" }
-  split: Record<string, string[]>;
+  split: Record<string, ExerciseEntry[]>;
 };
 
 export type SkillModuleData = {

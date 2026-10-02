@@ -7,6 +7,10 @@ import { createPlan } from "@/actions/planActions";
 import { generatePlan, importPlan } from "@/actions/generatePlanAction";
 import { SCHEMA_PROMPT } from "@/lib/schemaPrompt";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import type { ExerciseEntry } from "@/types/schema";
+import { exerciseName } from "@/lib/exercises";
+import { ExerciseComboInput } from "@/components/ExerciseComboInput";
+import { ExerciseGifThumb } from "@/components/ExerciseGifThumb";
 
 const T = {
   surface: "var(--protocol-surface)",
@@ -233,7 +237,7 @@ type NodeState = {
 type WorkoutState = {
   title: string;
   focus: string;
-  split: Record<string, string[]>;
+  split: Record<string, ExerciseEntry[]>;
 };
 type SkillState = { title: string; subject: string; nodes: NodeState[] };
 type StudyState = {
@@ -361,13 +365,13 @@ function WorkoutSplitEditor({
   split,
   onChange,
 }: {
-  split: Record<string, string[]>;
-  onChange: (s: Record<string, string[]>) => void;
+  split: Record<string, ExerciseEntry[]>;
+  onChange: (s: Record<string, ExerciseEntry[]>) => void;
 }) {
   function addExercise(day: string) {
     onChange({ ...split, [day]: [...(split[day] ?? []), ""] });
   }
-  function updateExercise(day: string, idx: number, val: string) {
+  function updateExercise(day: string, idx: number, val: ExerciseEntry) {
     const arr = [...(split[day] ?? [])];
     arr[idx] = val;
     onChange({ ...split, [day]: arr });
@@ -420,30 +424,11 @@ function WorkoutSplitEditor({
                 key={ei}
                 style={{ display: "flex", gap: 4, marginBottom: 4 }}
               >
-                <input
+                <ExerciseComboInput
                   value={ex}
-                  onChange={(e) => updateExercise(day, ei, e.target.value)}
-                  placeholder="Exercise…"
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    background: "transparent",
-                    border: `1px solid ${T.rule}`,
-                    outline: "none",
-                    padding: "3px 6px",
-                    fontFamily: T.mono,
-                    fontSize: 9,
-                    color: T.ink,
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) =>
-                    ((e.target as HTMLInputElement).style.borderColor =
-                      T.accent)
-                  }
-                  onBlur={(e) =>
-                    ((e.target as HTMLInputElement).style.borderColor = T.rule)
-                  }
+                  onChange={(v) => updateExercise(day, ei, v)}
                 />
+                <ExerciseGifThumb label={exerciseName(ex)} />
                 <button
                   type="button"
                   onClick={() => removeExercise(day, ei)}

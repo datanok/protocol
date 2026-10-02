@@ -19,6 +19,8 @@ import type {
 
 import { T } from "@/lib/tokens";
 import { ProtocolInput, ProtocolTextarea } from "@/components/ui/ProtocolUI";
+import { exerciseName } from "@/lib/exercises";
+import { ExerciseGifThumb } from "@/components/ExerciseGifThumb";
 
 const TYPE_ACCENTS: Record<string, string> = T.moduleColors;
 
@@ -394,162 +396,166 @@ function WorkoutSection({
           </span>
         </div>
       )}
-      {exercises.map((ex, exIdx) => (
-        <div
-          key={ex}
-          style={{
-            borderBottom: `1px solid ${T.rule}`,
-            paddingBottom: 16,
-            marginBottom: 16,
-          }}
-        >
+      {exercises.map((ex, exIdx) => {
+        const name = exerciseName(ex);
+        return (
           <div
+            key={name}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 10,
+              borderBottom: `1px solid ${T.rule}`,
+              paddingBottom: 16,
+              marginBottom: 16,
             }}
           >
-            <span
-              style={{
-                fontFamily: T.mono,
-                fontSize: 10,
-                color: T.stone,
-                width: 22,
-                flexShrink: 0,
-              }}
-            >
-              {String(exIdx + 1).padStart(2, "0")}
-            </span>
-            <span
-              style={{
-                flex: 1,
-                fontFamily: T.sans,
-                fontSize: 12,
-                fontWeight: 500,
-                color: T.ink,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              {ex}
-            </span>
-            <button
-              type="button"
-              onClick={() => addSet(ex)}
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: T.mono,
-                fontSize: 10,
-                color: T.stone,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
+                gap: 10,
+                marginBottom: 10,
               }}
             >
-              <Plus style={{ width: 10, height: 10 }} /> Set
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "26px 1fr 1fr 22px",
-              gap: 8,
-              paddingBottom: 6,
-              marginLeft: 32,
-            }}
-          >
-            {["Set", "kg", "Reps", ""].map((h) => (
               <span
-                key={h}
                 style={{
                   fontFamily: T.mono,
                   fontSize: 10,
+                  color: T.stone,
+                  width: 22,
+                  flexShrink: 0,
+                }}
+              >
+                {String(exIdx + 1).padStart(2, "0")}
+              </span>
+              <ExerciseGifThumb label={name} />
+              <span
+                style={{
+                  flex: 1,
+                  fontFamily: T.sans,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: T.ink,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {name}
+              </span>
+              <button
+                type="button"
+                onClick={() => addSet(name)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: T.mono,
+                  fontSize: 10,
+                  color: T.stone,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  color: T.stone,
-                  textAlign: "center",
                 }}
               >
-                {h}
-              </span>
-            ))}
-          </div>
+                <Plus style={{ width: 10, height: 10 }} /> Set
+              </button>
+            </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              marginLeft: 32,
-            }}
-          >
-            {(log.exerciseLogs[ex] ?? []).map((set, setIdx) => (
-              <div
-                key={setIdx}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "26px 1fr 1fr 22px",
-                  gap: 8,
-                  alignItems: "center",
-                }}
-              >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "26px 1fr 1fr 22px",
+                gap: 8,
+                paddingBottom: 6,
+                marginLeft: 32,
+              }}
+            >
+              {["Set", "kg", "Reps", ""].map((h) => (
                 <span
+                  key={h}
                   style={{
                     fontFamily: T.mono,
-                    fontSize: 11,
-                    color: T.accent,
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {setIdx + 1}
-                </span>
-                <ProtocolInput
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={set.weight}
-                  placeholder="—"
-                  onChange={(e) =>
-                    updateSet(ex, setIdx, "weight", e.target.value)
-                  }
-                />
-                <ProtocolInput
-                  type="number"
-                  min="0"
-                  value={set.reps}
-                  placeholder="—"
-                  onChange={(e) =>
-                    updateSet(ex, setIdx, "reps", e.target.value)
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => removeSet(ex, setIdx)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
                     color: T.stone,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    textAlign: "center",
                   }}
                 >
-                  <Minus style={{ width: 11, height: 11 }} />
-                </button>
-              </div>
-            ))}
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                marginLeft: 32,
+              }}
+            >
+              {(log.exerciseLogs[name] ?? []).map((set, setIdx) => (
+                <div
+                  key={setIdx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "26px 1fr 1fr 22px",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: 11,
+                      color: T.accent,
+                      textAlign: "center",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {setIdx + 1}
+                  </span>
+                  <ProtocolInput
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={set.weight}
+                    placeholder="—"
+                    onChange={(e) =>
+                      updateSet(name, setIdx, "weight", e.target.value)
+                    }
+                  />
+                  <ProtocolInput
+                    type="number"
+                    min="0"
+                    value={set.reps}
+                    placeholder="—"
+                    onChange={(e) =>
+                      updateSet(name, setIdx, "reps", e.target.value)
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSet(name, setIdx)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: T.stone,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Minus style={{ width: 11, height: 11 }} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Workout notes — collapsed by default */}
       {exercises.length > 0 && showNotes ? (
@@ -1182,7 +1188,10 @@ function CommitPageContent() {
   const initialWorkoutLogs = useMemo<ExerciseLogs>(
     () =>
       Object.fromEntries(
-        selectedExercises.map((ex) => [ex, [{ weight: "", reps: "" }]]),
+        selectedExercises.map((ex) => [
+          exerciseName(ex),
+          [{ weight: "", reps: "" }],
+        ]),
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -1197,7 +1206,7 @@ function CommitPageContent() {
     const exs = workoutData?.split?.[day] ?? [];
     setWorkoutLog({
       exerciseLogs: Object.fromEntries(
-        exs.map((ex) => [ex, [{ weight: "", reps: "" }]]),
+        exs.map((ex) => [exerciseName(ex), [{ weight: "", reps: "" }]]),
       ),
       notes: "",
     });
