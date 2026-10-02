@@ -35,6 +35,7 @@ import type {
 } from "@/types/schema";
 
 import { T } from "@/lib/tokens";
+import { exerciseName } from "@/lib/exercises";
 
 const WEEK_DAYS = [
   "Monday",
@@ -706,7 +707,7 @@ function WorkoutEditor({
                 {day}
               </div>
               <ProtocolTextarea
-                value={(data.split[day] ?? []).join("\n")}
+                value={(data.split[day] ?? []).map(exerciseName).join("\n")}
                 onChange={(v) =>
                   onChange({
                     ...data,
