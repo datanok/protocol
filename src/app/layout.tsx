@@ -1,26 +1,51 @@
 import type { Metadata } from "next";
-import { Public_Sans, Space_Mono, Lora } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import { Toaster } from "sonner";
 
-const publicSans = Public_Sans({
+// Fonts are self-hosted (latin subset, sourced from Google Fonts) so builds
+// don't depend on fetching from fonts.googleapis.com.
+const publicSans = localFont({
   variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  src: "./fonts/PublicSans-Variable-latin.woff2",
+  weight: "400 600",
+  style: "normal",
+  display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const spaceMono = localFont({
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  src: [
+    {
+      path: "./fonts/SpaceMono-Regular-latin.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/SpaceMono-Bold-latin.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  display: "swap",
 });
 
-const lora = Lora({
+const lora = localFont({
   variable: "--font-serif-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  src: [
+    {
+      path: "./fonts/Lora-Variable-latin.woff2",
+      weight: "400 600",
+      style: "normal",
+    },
+    {
+      path: "./fonts/Lora-Italic-Variable-latin.woff2",
+      weight: "400 600",
+      style: "italic",
+    },
+  ],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
