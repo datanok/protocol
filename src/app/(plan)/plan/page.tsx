@@ -32,10 +32,13 @@ import type {
   NutritionModuleData,
   ModuleNode,
   Habit,
+  ExerciseEntry,
 } from "@/types/schema";
 
 import { T } from "@/lib/tokens";
 import { exerciseName } from "@/lib/exercises";
+import { ExerciseComboInput } from "@/components/ExerciseComboInput";
+import { ExerciseGifThumb } from "@/components/ExerciseGifThumb";
 
 const WEEK_DAYS = [
   "Monday",
@@ -683,7 +686,7 @@ function WorkoutEditor({
         />
       </div>
       <div>
-        <Label>Weekly Split (one exercise per line)</Label>
+        <Label>Weekly Split</Label>
         <div
           style={{
             display: "grid",
@@ -692,39 +695,101 @@ function WorkoutEditor({
             marginTop: 8,
           }}
         >
-          {WEEK_DAYS.map((day) => (
-            <div key={day}>
-              <div
-                style={{
-                  fontFamily: T.mono,
-                  fontSize: 9,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: T.stone,
-                  marginBottom: 4,
-                }}
-              >
-                {day}
+          {WEEK_DAYS.map((day) => {
+            const exercises = data.split[day] ?? [];
+            function updateExercise(idx: number, val: ExerciseEntry) {
+              const arr = [...exercises];
+              arr[idx] = val;
+              onChange({ ...data, split: { ...data.split, [day]: arr } });
+            }
+            function removeExercise(idx: number) {
+              onChange({
+                ...data,
+                split: {
+                  ...data.split,
+                  [day]: exercises.filter((_, i) => i !== idx),
+                },
+              });
+            }
+            function addExercise() {
+              onChange({
+                ...data,
+                split: { ...data.split, [day]: [...exercises, ""] },
+              });
+            }
+            return (
+              <div key={day}>
+                <div
+                  style={{
+                    fontFamily: T.mono,
+                    fontSize: 9,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: T.stone,
+                    marginBottom: 4,
+                  }}
+                >
+                  {day}
+                </div>
+                <div
+                  style={{
+                    border: `1px solid ${T.rule}`,
+                    padding: 6,
+                    minHeight: 64,
+                  }}
+                >
+                  {exercises.map((ex, ei) => (
+                    <div
+                      key={ei}
+                      style={{ display: "flex", gap: 4, marginBottom: 4 }}
+                    >
+                      <ExerciseComboInput
+                        value={ex}
+                        onChange={(v) => updateExercise(ei, v)}
+                      />
+                      <ExerciseGifThumb label={exerciseName(ex)} />
+                      <button
+                        type="button"
+                        onClick={() => removeExercise(ei)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: T.stone,
+                          padding: "2px 3px",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Trash2 style={{ width: 9, height: 9 }} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addExercise}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: T.mono,
+                      fontSize: 8,
+                      color: T.stone,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      padding: "2px 0",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    <Plus style={{ width: 8, height: 8 }} /> Add
+                  </button>
+                </div>
               </div>
-              <ProtocolTextarea
-                value={(data.split[day] ?? []).map(exerciseName).join("\n")}
-                onChange={(v) =>
-                  onChange({
-                    ...data,
-                    split: {
-                      ...data.split,
-                      [day]: v
-                        .split("\n")
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                    },
-                  })
-                }
-                placeholder="Rest"
-                rows={4}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

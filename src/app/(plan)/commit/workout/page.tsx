@@ -11,6 +11,7 @@ import { saveWorkoutSession } from "@/actions/workoutActions";
 import { Check, X, Plus, Minus } from "lucide-react";
 import { T } from "@/lib/tokens";
 import { exerciseName } from "@/lib/exercises";
+import { ExerciseGifThumb } from "@/components/ExerciseGifThumb";
 
 const DAY_FULL = [
   "Sunday",
@@ -490,6 +491,7 @@ export default function WorkoutCommitFlow() {
                         >
                           {String(exIdx + 1).padStart(2, "0")}
                         </span>
+                        <ExerciseGifThumb label={exerciseName(ex)} />
                         <span
                           style={{
                             flex: 1,
