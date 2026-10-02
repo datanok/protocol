@@ -379,7 +379,10 @@ function ExerciseComboInput({
     <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <input
         value={text}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 100)}
         placeholder="Exercise…"
@@ -407,7 +410,8 @@ function ExerciseComboInput({
             position: "absolute",
             top: "100%",
             left: 0,
-            right: 0,
+            right: "auto",
+            minWidth: 220,
             zIndex: 10,
             background: T.surface,
             border: `1px solid ${T.rule}`,
