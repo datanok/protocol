@@ -1,13 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { getExerciseGif } from "@/lib/exerciseGifs";
+import { useEffect, useState } from "react";
+import { useExerciseGif } from "@/lib/exerciseGifs";
 import { T } from "@/lib/tokens";
+
+function AnimatedFrames({
+  frames,
+  style,
+}: {
+  frames: [string, string];
+  style: React.CSSProperties;
+}) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((v) => (v === 0 ? 1 : 0)), 650);
+    return () => clearInterval(id);
+  }, []);
+  return <img src={frames[i]} alt="" style={style} />;
+}
 
 export function ExerciseGifThumb({ label }: { label: string }) {
   const [expanded, setExpanded] = useState(false);
-  const src = getExerciseGif(label);
-  if (!src) return null;
+  const match = useExerciseGif(label);
+  if (!match) return null;
 
   return (
     <>
@@ -21,7 +36,7 @@ export function ExerciseGifThumb({ label }: { label: string }) {
           height: 28,
           padding: 0,
           border: `1px solid ${T.rule}`,
-          background: `var(--protocol-tint) url(${src}) center/cover`,
+          background: `var(--protocol-tint) url(${match.frames[0]}) center/cover`,
           cursor: "pointer",
         }}
       />
@@ -49,9 +64,8 @@ export function ExerciseGifThumb({ label }: { label: string }) {
               width: "100%",
             }}
           >
-            <img
-              src={src}
-              alt={label}
+            <AnimatedFrames
+              frames={match.frames}
               style={{ width: "100%", display: "block" }}
             />
             <div
@@ -74,6 +88,14 @@ export function ExerciseGifThumb({ label }: { label: string }) {
                 }}
               >
                 {label}
+                {match.matchedName.toLowerCase() !== label.toLowerCase() && (
+                  <>
+                    {" "}
+                    <span style={{ color: T.accent }}>
+                      — closest match: {match.matchedName}
+                    </span>
+                  </>
+                )}
               </span>
               <button
                 type="button"
@@ -87,6 +109,7 @@ export function ExerciseGifThumb({ label }: { label: string }) {
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   color: T.stone,
+                  flexShrink: 0,
                 }}
               >
                 Close
